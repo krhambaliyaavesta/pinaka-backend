@@ -1,0 +1,42 @@
+---
+description: Guidelines for implementing the mapper pattern which transforms data between different layers. This rule explains how to create mappers for converting between domain entities, DTOs, and external data formats while keeping the transformation logic organized and maintainable.
+globs: 
+alwaysApply: false
+---
+# Mapper Pattern
+
+Rule type: Design Pattern
+Rule description: Guidelines for implementing the mapper pattern which transforms data between different layers. This rule explains how to create mappers for converting between domain entities, DTOs, and external data formats while keeping the transformation logic organized and maintainable.
+
+## Structure
+- General mappers should be in the `mappers` directory
+- Use case specific mappers should be in the use case directory
+- Mappers should follow naming convention: `EntityMapper` or `UseCaseNameMapper`
+
+## Implementation Guidelines
+- Mappers should be responsible for transforming data between layers
+- Domain entities should be created via mappers from external data
+- DTOs should be created via mappers from domain entities
+- Mappers should be stateless and use static methods
+- Common mapping methods: `toDomain()`, `toDto()`, `toEntity()`
+
+## Responsibilities
+- Transform data between different representations
+- Handle null/undefined values gracefully
+- Perform data validation when necessary
+- Hide implementation details of different layers
+- Create domain entities with all required data
+
+## Best Practices
+- Keep mappers simple and focused on transformation
+- Avoid business logic in mappers
+- Use composition for complex mappings
+- Create specialized mappers for specific transformations
+- Consider using generic base mappers for common operations
+- Test mappers thoroughly, especially edge cases
+
+## Generic Examples
+- Entity Mapper: `mappers/UserMapper.ts`
+- Use Case Mapper: `application/useCases/createUser/CreateUserMapper.ts`
+- Value Object Mapper: `mappers/AddressMapper.ts`
+- DTO Mapper: `mappers/UserDtoMapper.ts`

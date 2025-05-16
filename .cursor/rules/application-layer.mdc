@@ -1,0 +1,212 @@
+---
+description: Guidelines for the application layer which orchestrates business operations through use cases. This rule explains how to structure use cases, create DTOs for data transfer, and implement factories for dependency management while keeping the layer free of infrastructure concerns.
+globs: 
+alwaysApply: false
+---
+# Application Layer
+
+Rule type: Application Layer
+Rule description: Guidelines for the application layer which orchestrates business operations through use cases. This rule explains how to structure use cases, create DTOs for data transfer, and implement factories for dependency management while keeping the layer free of infrastructure concerns.
+
+## Core Concept
+The application layer orchestrates the flow of data and business rules between the domain layer and external interfaces. It contains use cases that implement specific business operations by coordinating domain entities.
+
+## What Belongs in Application Layer
+- **Use Cases**: Each representing a specific business operation
+- **DTOs**: Data Transfer Objects for input/output data
+- **Interfaces**: Required by use cases but implemented in infrastructure layer
+- **Factories**: For dependency creation and injection
+- **Domain Services**: That operate on multiple entities
+- **Constants**: Application-specific constants and configuration values
+- **Use Case Mappers**: Mappers specific to use cases for data transformation
+
+
+## What Does NOT Belong in Application Layer
+- Database implementation details
+- Framework-specific code
+- UI/presentation logic
+- External APIs implementation
+- Direct data access code
+
+## Folder Structure
+```
+📂 application
+ ┣ 📂 interfaces
+ ┃ ┗ 📜 UserService.ts
+ ┣ 📂 constants
+ ┃ ┗ 📜 constants.ts
+ ┣ 📂 services
+ ┃ ┗ 📜 DomainEventDispatcher.ts
+ ┗ 📂 useCases
+   ┣ 📂 createUser
+   ┃ ┣ 📜 CreateUserUseCase.ts
+   ┃ ┣ 📜 CreateUserRequestDto.ts
+   ┃ ┣ 📜 CreateUserResponseDto.ts
+   ┃ ┣ 📜 CreateUserFactory.ts
+   ┃ ┗ 📜 CreateUserMapper.ts
+   ┗ 📂 getUserById
+     ┣ 📜 GetUserByIdUseCase.ts
+     ┣ 📜 GetUserByIdRequestDto.ts
+     ┣ 📜 GetUserByIdResponseDto.ts
+     ┣ 📜 GetUserByIdFactory.ts
+     ┗ 📜 GetUserByIdMapper.ts
+```
+
+## Use Case Pattern
+Each use case should be organized in its own directory with these files:
+- Main use case class (e.g., `CreateUserUseCase.ts`)
+- Request DTO (e.g., `CreateUserRequestDto.ts`)
+- Response DTO (e.g., `CreateUserResponseDto.ts`)
+- Factory (e.g., `CreateUserFactory.ts`)
+- Mappers (e.g., `CreateUserMapper.ts`)
+
+### Use Case Mappers
+Mappers should be placed within each use case directory to handle data transformation specifically for that use case. This approach:
+
+- Keeps transformation logic close to where it's used
+- Makes use cases more self-contained
+- Improves maintainability by avoiding large, centralized mapper files
+- Allows for use case-specific mapping logic
+
+Example mapper within a use case directory:
+```typescript
+// application/useCases/getMarketTrends/GetMarketTrendsMapper.ts
+
+import { MarketTrend } from '../../../domain/entities/MarketTrend';
+import { GetMarketTrendsResponseDto } from './GetMarketTrendsResponseDto';
+
+export class GetMarketTrendsMapper {
+  static toResponseDto(marketTrend: MarketTrend): GetMarketTrendsResponseDto {
+    return {
+      suburbTrend: marketTrend.suburbTrend,
+      suburbCensus: marketTrend.suburbCensus,
+      Sa1Boundary: {
+        GMapRequestUrl: marketTrend.staticMapUrl || ''
+      }
+    };
+  }
+  
+  static toRequestParams(dto: any): any {
+    return {
+      suburb: dto.suburb,
+      state: dto.state,
+      postcode: dto.postcode,
+      gnaf_id: dto.gnaf_id,
+      map_width: dto.map_width,
+      map_height: dto.map_height
+    };
+  }
+}
+```
+
+## Implementation Guidelines
+- Use cases should have an `execute()` method that accepts a request DTO and returns a response DTO
+- Business logic should be encapsulated within the use case
+- Dependencies should be injected via constructor
+- Repositories should be accessed through interfaces, not implementations
+- Data transformation should be handled by mappers
+
+## Factory Pattern & Dependency Injection
+
+### Factory Implementation
+Factories are responsible for creating and wiring up use cases with all their dependencies.
+
+### Where Factories Are Used
+Factories are primarily used in:
+
+1. **Controllers**: When handling HTTP requests, controllers use factories to get configured use cases.
+   ```typescript
+   // UserController.ts (presentation layer)
+   async createUser(req: Request, res: Response) {
+     const { useCase, loggerService } = CreateUserFactory.create();
+     const result = await useCase.execute(requestDto);
+     // ...
+   }
+   ```
+
+2. **Command Line Interfaces**: When handling CLI commands.
+
+3. **Any entry point to the application**: Wherever an external actor needs to interact with a use case.
+
+### Benefits of Using Factories
+- **Separation of Concerns**: Controllers don't need to know how to create use cases or their dependencies
+- **Dependency Injection**: All dependencies are injected into the use case, making it more testable
+- **Centralized Creation Logic**: If dependencies change, you only need to update the factory
+- **Testability**: When unit testing controllers, you can easily mock the factory
+- **Consistent Configuration**: Ensures use cases are always created with the correct dependencies
+
+## Code Examples
+
+### Use Case Example (CreateUserUseCase.ts)
+```typescript
+import { User } from '../../domain/entities/User';
+import { UserRepo } from '../../domain/repositories/UserRepo';
+import { CreateUserRequestDto } from './CreateUserRequestDto';
+import { CreateUserResponseDto } from './CreateUserResponseDto';
+import { CreateUserMapper } from './CreateUserMapper';
+
+export class CreateUserUseCase {
+  constructor(private userRepo: UserRepo) {}
+
+  async execute(request: CreateUserRequestDto): Promise<CreateUserResponseDto> {
+    // Create domain entity from DTO
+    const userProps = {
+      id: request.id,
+      name: request.name,
+      email: request.email,
+      createdAt: new Date()
+    };
+    
+    const user = User.create(userProps);
+    
+    // Use repository to save the entity
+    await this.userRepo.create(user);
+    
+    // Transform domain entity to response DTO and return
+    return CreateUserMapper.toDto(user);
+  }
+}
+```
+
+### Factory Example (CreateUserFactory.ts)
+```typescript
+import { CreateUserUseCase } from './CreateUserUseCase';
+import { UserRepoImpl } from '../../../infrastructure/repositories/UserRepoImpl';
+import { LoggerService } from '../../../shared/services/LoggerService';
+
+export class CreateUserFactory {
+  static create() {
+    const userRepo = new UserRepoImpl();
+    const loggerService = new LoggerService();
+    const useCase = new CreateUserUseCase(userRepo);
+    
+    return { useCase, loggerService };
+  }
+}
+```
+
+### DTO Example (CreateUserRequestDto.ts)
+```typescript
+export interface CreateUserRequestDto {
+  id: string;
+  name: string;
+  email: string;
+}
+```
+
+### Mapper Example (CreateUserMapper.ts)
+```typescript
+import { User } from '../../../domain/entities/User';
+import { CreateUserResponseDto } from './CreateUserResponseDto';
+
+export class CreateUserMapper {
+  static toDto(user: User): CreateUserResponseDto {
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      createdAt: user.createdAt.toISOString()
+    };
+  }
+}
+```

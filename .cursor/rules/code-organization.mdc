@@ -1,0 +1,120 @@
+---
+description: General code organization principles and best practices across the entire codebase. This rule defines naming conventions, import organization, folder structure, error handling approaches, and dependency management to maintain consistency and readability.
+globs: 
+alwaysApply: false
+---
+# Code Organization & Best Practices
+
+Rule type: Coding Standards
+Rule description: General code organization principles and best practices across the entire codebase. This rule defines naming conventions, import organization, folder structure, error handling approaches, and dependency management to maintain consistency and readability.
+
+## Naming Conventions
+- Interfaces: No 'I' prefix, descriptive names (e.g., `UserRepo`, `ListingRepo`)
+- Implementations: Original name + Impl suffix (e.g., `UserRepoImpl`, `ListingRepoImpl`)
+- Use cases: Action + entity + 'UseCase' (e.g., `CreateUserUseCase`, `GetListingsByLocationUseCase`)
+- Files: camelCase for interfaces, PascalCase for classes, or camelCaseImpl for implementations
+- Query builders: EntityQueryBuilder (e.g., `ListingsQueryBuilder`, `LocationQueryBuilder`)
+- Mappers: EntityMapper (e.g., `ListingDetailsMapper`, `LocationDetailsMapper`)
+
+## Module Structure
+- Each module should be self-contained with all clean architecture layers
+- Module structure should follow:
+  ```
+  📂 module/
+   ┣ 📂 domain/
+   ┃ ┣ 📂 entities/
+   ┃ ┗ 📂 repositories/     (repository interfaces)
+   ┣ 📂 application/
+   ┃ ┣ 📂 constants/
+   ┃ ┣ 📂 interfaces/
+   ┃ ┗ 📂 useCases/
+   ┃   ┗ 📂 useCaseName/
+   ┣ 📂 infrastructure/
+   ┃ ┗ 📂 repositories/     (implementations)
+   ┣ 📂 presentation/
+   ┃ ┣ 📂 controllers/
+   ┃ ┣ 📂 routes/
+   ┃ ┗ 📂 validation/
+   ┗ 📂 mappers/
+  ```
+
+## Import Organization
+- Group imports by external libraries, then internal modules
+- Order imports from most external to most internal
+- Group domain imports before application imports before infrastructure/presentation imports
+- Example:
+  ```typescript
+  // External imports
+  import { RevAppServiceMain } from '@realestateview/avesta-backend-core';
+
+  // Domain imports
+  import { ListingDetails } from '../../domain/entities/listingDetails';
+  import { ListingRepo } from '../../domain/repositories/listingRepo';
+
+  // Application imports
+  import { GetListingsByLocationUseCase } from '../../application/useCases/getListingsByLocation/getListingsByLocationUseCase';
+  
+  // Infrastructure imports
+  import { ListingRepoImpl } from '../../infrastructure/repositories/listingRepoImpl';
+  ```
+
+## Error Handling
+- Domain errors should be domain-specific exceptions
+- Use cases should translate domain errors to application errors
+- Infrastructure layer should handle technical errors
+- Presentation layer should format errors for response
+- Example:
+  ```typescript
+  try {
+    const result = await useCase.execute(dto);
+    return res.status(200).json(result);
+  } catch (error) {
+    if (error instanceof DomainError) {
+      return res.status(400).json({ error: error.message });
+    }
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+  ```
+
+## Method Naming
+- Repositories: get*, find*, create*, update*, delete*
+- Use cases: execute
+- Mappers: toDomain, toDto
+- Controllers: Action name matching route (e.g., getListingsByLocation)
+- Query builders: with* methods for building queries (e.g., withState, withPostCode)
+
+## Dependency Management
+- Dependencies should be injected, not created inside classes
+- Factory classes should handle dependency creation and injection
+- External services should be accessed through interfaces
+- Core services like databases should be injected into repositories
+
+## Generic Examples
+- Import organization:
+```typescript
+// External imports
+import { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+
+// Domain imports
+import { User } from '../domain/entities/User';
+
+// Application imports
+import { CreateUserUseCase } from '../application/useCases/createUser/CreateUserUseCase';
+
+// Infrastructure imports
+import { LoggerService } from '../infrastructure/services/LoggerService';
+```
+
+- Error handling:
+```typescript
+try {
+  const result = await useCase.execute(dto);
+  return res.status(200).json(result);
+} catch (error) {
+  if (error instanceof DomainError) {
+    return res.status(400).json({ error: error.message });
+  }
+  return res.status(500).json({ error: 'Internal server error' });
+}
+```

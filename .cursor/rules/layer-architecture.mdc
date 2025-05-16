@@ -1,0 +1,171 @@
+---
+description: The foundational guide for implementing clean architecture in the project. This rule outlines the overall architecture, layer organization, and dependency rules to ensure separation of concerns, testability, and maintainability across the application.
+globs: 
+alwaysApply: false
+---
+# Clean Architecture Structure
+
+Rule type: Architecture
+Rule description: The foundational guide for implementing clean architecture in the project. This rule outlines the overall architecture, layer organization, and dependency rules to ensure separation of concerns, testability, and maintainability across the application.
+
+Clean Architecture is an architectural pattern that separates the concerns of a software system into layers, each with its own responsibility. This separation allows for better testability, maintainability, and flexibility.
+
+## Core Principles
+
+1. **Independence of Frameworks**: The architecture doesn't depend on the existence of some library or framework.
+2. **Testability**: Business rules can be tested without UI, database, web server, or any external element.
+3. **Independence of UI**: The UI can change easily without changing the rest of the system.
+4. **Independence of Database**: The business rules are not bound to the database.
+5. **Independence of any External Agency**: Business rules don't know anything about external interfaces.
+
+## Layer Organization
+
+Each module should follow this layered structure:
+
+### Domain Layer
+The innermost layer containing business entities and rules, independent of any external concerns.
+
+### Application Layer
+Contains use cases that orchestrate the flow of data to and from the domain layer.
+
+### Infrastructure Layer
+Contains implementations of the interfaces defined in the domain and application layers.
+
+### Presentation Layer
+Handles the delivery mechanism (HTTP, CLI, etc.) and transforms data for display.
+
+## Folder Structure Example
+
+```
+📦 modules
+ ┣ 📂 users
+ ┃ ┣ 📂 domain
+ ┃ ┃ ┣ 📂 entities
+ ┃ ┃ ┃ ┗ 📜 User.ts
+ ┃ ┃ ┣ 📂 valueObjects
+ ┃ ┃ ┃ ┗ 📜 Email.ts
+ ┃ ┃ ┣ 📂 events
+ ┃ ┃ ┃ ┗ 📜 UserCreatedEvent.ts
+ ┃ ┃ ┣ 📂 repositories
+ ┃ ┃ ┃ ┗ 📜 UserRepo.ts
+ ┃ ┃ ┗ 📂 exceptions
+ ┃ ┃   ┗ 📜 InvalidUserException.ts
+ ┃ ┣ 📂 application
+ ┃ ┃ ┣ 📂 interfaces
+ ┃ ┃ ┃ ┗ 📜 UserService.ts
+ ┃ ┃ ┣ 📂 constants
+ ┃ ┃ ┃ ┗ 📜 constants.ts
+ ┃ ┃ ┗ 📂 useCases
+ ┃ ┃   ┣ 📂 createUser
+ ┃ ┃   ┃ ┣ 📜 CreateUserUseCase.ts
+ ┃ ┃   ┃ ┣ 📜 CreateUserRequestDto.ts
+ ┃ ┃   ┃ ┣ 📜 CreateUserResponseDto.ts
+ ┃ ┃   ┃ ┣ 📜 CreateUserFactory.ts
+ ┃ ┃   ┃ ┗ 📜 CreateUserMapper.ts
+ ┃ ┃   ┗ 📂 getUserById
+ ┃ ┃     ┣ 📜 GetUserByIdUseCase.ts
+ ┃ ┃     ┣ 📜 GetUserByIdRequestDto.ts
+ ┃ ┃     ┣ 📜 GetUserByIdResponseDto.ts
+ ┃ ┃     ┣ 📜 GetUserByIdFactory.ts
+ ┃ ┃     ┗ 📜 GetUserByIdMapper.ts
+ ┃ ┣ 📂 infrastructure
+ ┃ ┃ ┗ 📂 repositories
+ ┃ ┃   ┣ 📜 UserRepoImpl.ts
+ ┃ ┃   ┣ 📜 UserQueryBuilder.ts
+ ┃ ┃   ┗ 📜 BaseRepoImpl.ts
+ ┃ ┣ 📂 presentation
+ ┃ ┃ ┣ 📂 controllers
+ ┃ ┃ ┃ ┗ 📜 UserController.ts
+ ┃ ┃ ┣ 📂 routes
+ ┃ ┃ ┃ ┗ 📜 userRoutes.ts
+ ┃ ┃ ┣ 📂 validation
+ ┃ ┃ ┃ ┗ 📜 UserValidationSchema.ts
+ ┃ ┃ ┗ 📂 interfaces
+ ┃ ┃   ┗ 📜 HTTPController.ts
+ ┃ ┗ 📂 mappers
+ ┃   ┗ 📜 UserMapper.ts
+ ┣ 📂 products
+ ┃ ┣ 📂 domain
+ ┃ ┣ 📂 application
+ ┃ ┣ 📂 infrastructure
+ ┃ ┣ 📂 presentation
+ ┃ ┗ 📂 mappers
+ ┗ 📂 orders
+   ┣ 📂 domain
+   ┣ 📂 application
+   ┣ 📂 infrastructure
+   ┣ 📂 presentation
+   ┗ 📂 mappers
+
+📦 shared
+ ┣ 📂 factories
+ ┃ ┗ 📜 BaseFactory.ts
+ ┣ 📂 services
+ ┃ ┣ 📜 LoggerService.ts
+ ┃ ┗ 📜 ConfigService.ts
+ ┗ 📂 utils
+   ┣ 📜 dateUtils.ts
+   ┗ 📜 stringUtils.ts
+```
+
+## Layer Dependency Rules
+
+1. **Domain Layer**: Cannot import from any other layer
+   - Contains pure business logic and entities
+   - No external dependencies
+
+2. **Application Layer**: Can only import from domain layer
+   - Orchestrates domain entities to fulfill use cases
+   - Contains use cases, DTOs, and application-specific interfaces
+
+3. **Infrastructure Layer**: Can import from domain and application layers
+   - Implements interfaces defined in domain and application layers
+   - Contains concrete implementations for persistence, external services, etc.
+
+4. **Presentation Layer**: Can import from application and domain layers
+   - Handles HTTP/CLI/UI concerns
+   - Transforms requests into application layer DTOs
+   - Formats responses for client consumption
+
+## Implementation Guidelines
+
+### Domain Layer Implementation
+- Entity classes with static factory methods
+- Value objects for complex attributes
+- Domain services for operations not belonging to a single entity
+- Domain events for cross-cutting concerns
+- Domain exceptions for business rule violations
+- Repository interfaces defining data access contracts
+
+### Application Layer Implementation
+- Use cases with a single execute() method
+- DTOs for input/output data
+- Interfaces for required external services
+- Factories for dependency injection
+
+### Infrastructure Layer Implementation
+- Repository implementations
+- External service integrations
+- Database/ORM configurations
+- Caching mechanisms
+- Third-party API clients
+
+### Presentation Layer Implementation
+- Controllers to handle requests
+- Route definitions
+- Input validation
+- Response formatting
+- Error handling middleware
+
+## Shared Resources
+Common code should be placed in:
+- `shared/factories`: Factory classes for dependency creation
+- `shared/services`: Shared services used across modules
+- `shared/utils`: Utility functions and helpers
+
+## Generic Examples
+- Domain Entity: `domain/entities/User.ts`
+- Repository Interface: `domain/repositories/UserRepo.ts`
+- Repository Implementation: `infrastructure/repositories/UserRepoImpl.ts`
+- Use Case: `application/useCases/createUser/CreateUserUseCase.ts`
+- Controller: `presentation/controllers/UserController.ts`

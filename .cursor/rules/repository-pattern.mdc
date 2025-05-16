@@ -1,0 +1,143 @@
+---
+description: This rule defines the repository pattern implementation in the clean architecture. It specifies how to structure repository interfaces in the domain layer and their implementations in the infrastructure layer, creating a separation that allows for better testability and flexibility.
+globs: 
+alwaysApply: false
+---
+# Repository Pattern
+
+Rule type: Data Access Pattern
+Rule description: This rule defines the repository pattern implementation in the clean architecture. It specifies how to structure repository interfaces in the domain layer and their implementations in the infrastructure layer, creating a separation that allows for better testability and flexibility.
+
+## Structure
+- Repository interfaces should be defined in the `domain/repositories` directory
+- Repository implementations should be in the `infrastructure/repositories` directory
+- Follow naming convention: interface `EntityRepo.ts`, implementation `EntityRepoImpl.ts`
+- Base repositories can be created for common functionality
+
+## Interface and Implementation Separation
+- Repository interfaces define contracts for data access operations
+- Implementations provide the actual data access logic
+- This separation allows for:
+  - Multiple implementations of the same interface
+  - Easier testing with mock repositories
+  - Decoupling business logic from data access details
+
+## Implementation Guidelines
+- Repositories should return domain entities, not DTOs or raw data
+- Use mappers to transform between data layer and domain layer
+- Repository methods should be named by their intent (e.g., `getByLocation`, `findById`)
+- Separate query builders from repository implementations
+- Extend base repository classes for common functionality
+
+## Example Interface
+```typescript
+// domain/repositories/listingRepo.ts
+import { ListingDetails } from '../entities/listingDetails';
+
+export interface GetListingsByLocationProps {
+  state?: string;
+  suburbName?: string;
+  postcode?: number;
+  bedrooms?: number;
+  // Other filter properties
+}
+
+export interface ListingRepo {
+  getListingsByLocation(props: GetListingsByLocationProps): Promise<ListingDetails[]>;
+}
+```
+
+## Example Implementation
+```typescript
+// infrastructure/repositories/listingRepoImpl.ts
+import { RevAppServiceMain } from '@realestateview/avesta-backend-core';
+import { BaseRepository } from './baseRepoImpl';
+import { GetListingsByLocationProps, ListingRepo } from '../../domain/repositories/listingRepo';
+import { ListingsQueryBuilder } from './listingsQueryBuilder';
+import { ListingDetails } from '../../domain/entities/listingDetails';
+import { ListingDetailsMapper } from '../../mappers/listingDetailMappers';
+
+export class ListingRepoImpl extends BaseRepository implements ListingRepo {
+  constructor(
+    revBase: RevAppServiceMain<EConnectionTypes, ESType, CacheType>,
+    private indexResolver: any
+  ) {
+    super(revBase);
+  }
+  
+  async getListingsByLocation(props: GetListingsByLocationProps): Promise<ListingDetails[]> {
+    const index = this.indexResolver.getListingsOnMarketIndex();
+    const size = props.size || MAX_LOCATION_LISTINGS;
+    
+    // Use query builder for complex queries
+    const query = new ListingsQueryBuilder()
+      .withState(props.state)
+      .withSuburbName(props.suburbName)
+      .withPostCode(props.postcode)
+      // Other filters
+      .build();
+
+    const response = await this.executeQuery(query, index, 'get-listings-by-location');
+
+    // Use mapper to transform to domain entities
+    return response.map((hit) => ListingDetailsMapper.toDomain(hit));
+  }
+}
+```
+
+## Method Naming Conventions
+- `getById`: Retrieve a single entity by its ID
+- `getAll`: Retrieve all entities (with optional pagination)
+- `getBy{Criteria}`: Retrieve entities by specific criteria
+- `create`: Create a new entity
+- `update`: Update an existing entity
+- `delete`: Delete an entity
+- `exists`: Check if an entity exists
+
+## Query Builders
+- Use query builders to encapsulate complex query logic
+- Query builders should have a fluent interface
+- Each filter should have its own method
+- Final build() method should return the query object
+
+```typescript
+// infrastructure/repositories/listingsQueryBuilder.ts
+export class ListingsQueryBuilder {
+  private query: any = { /* base query structure */ };
+  
+  withState(state?: string) {
+    if (state) {
+      // Add state filter to query
+    }
+    return this;
+  }
+  
+  withPostCode(postcode?: number) {
+    if (postcode) {
+      // Add postcode filter to query
+    }
+    return this;
+  }
+  
+  // Other filter methods
+  
+  build() {
+    return this.query;
+  }
+}
+```
+
+## Best Practices
+- Repositories should be implementation-agnostic (database, API, etc.)
+- Repository interfaces should be defined in terms of domain concepts
+- Each repository should focus on a single entity or aggregate
+- Error handling should be consistent across repositories
+- Repositories should return domain objects or null/empty collections, not throw exceptions for "not found"
+- Repositories should not contain business logic
+- Inject dependencies rather than creating them inside repositories
+
+## Generic Examples
+- Interface: `domain/repositories/UserRepo.ts`
+- Implementation: `infrastructure/repositories/UserRepoImpl.ts`
+- Query Builder: `infrastructure/repositories/UserQueryBuilder.ts`
+- Base Repository: `infrastructure/repositories/BaseRepoImpl.ts`

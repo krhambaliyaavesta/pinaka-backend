@@ -1,0 +1,255 @@
+---
+description: Guidelines for the infrastructure layer which contains all external concerns like databases, third-party services, and framework integrations. This rule specifies how to implement repository interfaces, create database services, and structure external service integrations while maintaining clean architecture principles.
+globs: 
+alwaysApply: false
+---
+# Infrastructure Layer
+
+Rule type: Infrastructure Layer
+Rule description: Guidelines for the infrastructure layer which contains all external concerns like databases, third-party services, and framework integrations. This rule specifies how to implement repository interfaces, create database services, and structure external service integrations while maintaining clean architecture principles.
+
+## Core Concept
+The infrastructure layer provides implementations for interfaces defined in the domain and application layers. It contains all the external concerns like databases, external APIs, file systems, and third-party services.
+
+## What Belongs in Infrastructure Layer
+- **Repository Implementations**: Concrete implementations of repository interfaces defined in the domain/repositories directory
+- **External Service Integrations**: APIs, cloud services, messaging systems
+- **Data Access Logic**: Database connections, ORM configurations
+- **Framework-Specific Code**: Libraries and framework integrations
+- **File System Operations**: File storage, retrieval, and manipulation
+- **Authentication Mechanisms**: OAuth, JWT implementations, etc.
+
+## What Does NOT Belong in Infrastructure Layer
+- Business logic (should be in domain or application layer)
+- Use case definitions
+- HTTP controllers or routes
+- Domain entities or value objects
+
+## Folder Structure
+```
+📂 infrastructure
+ ┣ 📂 repositories
+ ┃ ┣ 📜 UserRepoImpl.ts
+ ┃ ┣ 📜 ProductRepoImpl.ts
+ ┃ ┗ 📜 BaseRepoImpl.ts
+ ┣ 📂 database
+ ┃ ┣ 📜 IDatabaseService.ts
+ ┃ ┣ 📜 MySqlDatabase.ts
+ ┃ ┗ 📜 MongoDatabase.ts
+ ┣ 📂 services
+ ┃ ┣ 📜 EmailServiceImpl.ts
+ ┃ ┣ 📜 PaymentServiceImpl.ts
+ ┃ ┗ 📜 StorageServiceImpl.ts
+ ┣ 📂 auth
+ ┃ ┣ 📜 JwtProvider.ts
+ ┃ ┗ 📜 PasswordHasher.ts
+ ┣ 📂 api
+ ┃ ┣ 📜 ThirdPartyApiClient.ts
+ ┃ ┗ 📜 ApiRequestBuilder.ts
+ ┗ 📂 logging
+   ┗ 📜 LoggerImpl.ts
+```
+
+## Implementation Guidelines
+- Repository implementations should return domain entities, not database models
+- Use mappers to transform between data models and domain entities
+- External service clients should be wrapped in interfaces defined in the application layer
+- Infrastructure concerns should be isolated and easily replaceable
+- Configuration should be externalized and injectable
+- Database access should be abstracted through interfaces to allow for different implementations
+- Apply the adapter pattern for all external services to ensure loose coupling
+
+## Database Service Example
+
+### Database Interface
+```typescript
+// IDatabaseService.ts
+export interface IDatabaseService {
+  // Core database operations with raw queries
+  query<T>(sql: string, params?: any[]): Promise<T[]>;
+  execute(sql: string, params?: any[]): Promise<boolean>;
+  
+  // Database connection
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+}
+```
+
+### MySQL Implementation
+```typescript
+// MySqlDatabase.ts
+import mysql from 'mysql2/promise';
+import { IDatabaseService } from './IDatabaseService';
+
+export class MySqlDatabase implements IDatabaseService {
+  private connection: mysql.Connection | null = null;
+  
+  constructor(private config: {
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+    database: string;
+  }) {}
+  
+  async connect(): Promise<void> {
+    this.connection = await mysql.createConnection({
+      host: this.config.host,
+      port: this.config.port,
+      user: this.config.user,
+      password: this.config.password,
+      database: this.config.database
+    });
+  }
+  
+  async disconnect(): Promise<void> {
+    if (this.connection) {
+      await this.connection.end();
+      this.connection = null;
+    }
+  }
+  
+  async query<T>(sql: string, params?: any[]): Promise<T[]> {
+    if (!this.connection) {
+      throw new Error('Database not connected');
+    }
+    
+    const [rows] = await this.connection.execute(sql, params || []);
+    return rows as T[];
+  }
+  
+  async execute(sql: string, params?: any[]): Promise<boolean> {
+    if (!this.connection) {
+      throw new Error('Database not connected');
+    }
+    
+    const [result] = await this.connection.execute(sql, params || []);
+    return (result as mysql.ResultSetHeader).affectedRows > 0;
+  }
+}
+```
+
+### Using Database in Repository
+```typescript
+// UserRepoImpl.ts
+import { User } from '../../domain/entities/User';
+import { UserRepo } from '../../repositories/UserRepo';
+import { IDatabaseService } from '../database/IDatabaseService';
+import { UserMapper } from './mappers/UserMapper';
+
+export class UserRepoImpl implements UserRepo {
+  constructor(private database: IDatabaseService) {}
+  
+  async getById(id: string): Promise<User | null> {
+    const query = 'SELECT * FROM users WHERE id = ?';
+    const users = await this.database.query<any>(query, [id]);
+    
+    if (users.length === 0) {
+      return null;
+    }
+    
+    return UserMapper.toDomain(users[0]);
+  }
+  
+  async getByIds(ids: string[]): Promise<User[]> {
+    const query = 'SELECT * FROM users WHERE id IN (?)';
+    const users = await this.database.query<any>(query, [ids]);
+    
+    return users.map(user => UserMapper.toDomain(user));
+  }
+  
+  async create(user: User): Promise<void> {
+    const userData = UserMapper.toPersistence(user);
+    const fields = Object.keys(userData).join(', ');
+    const placeholders = Object.keys(userData).map(() => '?').join(', ');
+    
+    const query = `INSERT INTO users (${fields}) VALUES (${placeholders})`;
+    await this.database.execute(query, Object.values(userData));
+  }
+  
+  async update(user: User): Promise<void> {
+    const userData = UserMapper.toPersistence(user);
+    const { id, ...data } = userData;
+    
+    const setClause = Object.keys(data)
+      .map(key => `${key} = ?`)
+      .join(', ');
+    
+    const query = `UPDATE users SET ${setClause} WHERE id = ?`;
+    await this.database.execute(query, [...Object.values(data), id]);
+  }
+  
+  async delete(id: string): Promise<void> {
+    const query = 'DELETE FROM users WHERE id = ?';
+    await this.database.execute(query, [id]);
+  }
+}
+```
+
+### Email Service Example
+```typescript
+// EmailServiceImpl.ts
+import { EmailService } from '../../application/interfaces/EmailService';
+
+export class EmailServiceImpl implements EmailService {
+  constructor(private smtpConfig: {
+    host: string;
+    port: number;
+    user: string;
+    password: string;
+  }) {}
+
+  async sendEmail(to: string, subject: string, body: string): Promise<void> {
+    // Implementation using SMTP client
+    console.log(`Email sent to ${to} with subject: ${subject}`);
+  }
+}
+```
+
+## Repository Implementation Relationship
+The infrastructure layer contains implementations of repository interfaces that are defined in the domain layer:
+
+```
+📂 module/
+ ┣ 📂 domain/
+ ┃ ┣ 📂 entities/
+ ┃ ┃ ┗ 📜 User.ts
+ ┃ ┗ 📂 repositories/      <- Repository interfaces defined here
+ ┃   ┣ 📜 UserRepo.ts
+ ┃   ┗ 📜 ProductRepo.ts
+ ┣ 📂 infrastructure/
+ ┃ ┣ 📂 repositories/      <- Implementations live here
+ ┃ ┃ ┣ 📜 UserRepoImpl.ts
+ ┃ ┃ ┗ 📜 ProductRepoImpl.ts
+ ┃ ┗ 📂 ... (other infrastructure concerns)
+```
+
+This separation allows:
+1. Cleaner dependency management (domain and application layers depend on interfaces, not implementations)
+2. Easier testing with mock repositories
+3. Multiple implementations for different infrastructure needs (e.g., MongoDB vs MySQL)
+
+Example repository interface (domain layer):
+```typescript
+// domain/repositories/listingRepo.ts
+export interface ListingRepo {
+  getById(id: string): Promise<Listing | null>;
+  getByLocation(locationParams: LocationParams): Promise<Listing[]>;
+}
+```
+
+Example implementation (infrastructure layer):
+```typescript
+// infrastructure/repositories/listingRepoImpl.ts
+export class ListingRepoImpl implements ListingRepo {
+  constructor(private database: IDatabaseService) {}
+  
+  async getById(id: string): Promise<Listing | null> {
+    // Implementation using specific database technology
+  }
+  
+  async getByLocation(locationParams: LocationParams): Promise<Listing[]> {
+    // Implementation using specific database technology
+  }
+}
+```

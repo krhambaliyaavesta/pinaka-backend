@@ -1,0 +1,96 @@
+---
+description: Guidelines for implementing domain entities, the core objects that represent business concepts. This rule explains what belongs in the domain layer, how to structure entities, value objects, repositories interfaces, and other domain components while keeping them free of infrastructure concerns.
+globs: 
+alwaysApply: false
+---
+# Domain Entities
+
+Rule type: Domain Layer
+Rule description: Guidelines for implementing domain entities, the core objects that represent business concepts. This rule explains what belongs in the domain layer, how to structure entities, value objects, repositories interfaces, and other domain components while keeping them free of infrastructure concerns.
+
+## Core Concept
+The domain layer is the heart of your application, containing only the business entities and their core business rules. It should be completely isolated from external concerns and framework dependencies.
+
+## What Belongs in Domain Layer
+- **Entities**: Core business objects with identities and lifecycles
+- **Value Objects**: Immutable objects that don't have identities but represent attributes
+- **Aggregates**: Clusters of entities treated as a single unit
+- **Domain Events**: Events that occur in the domain
+- **Domain Exceptions**: Custom exceptions for domain-specific errors
+- **Repository Interfaces**: Contracts for data access operations
+- **Domain Services**: Operations that don't belong to a single entity
+
+## What Does NOT Belong in Domain Layer
+- Services (should be in application layer)
+- External integrations or dependencies
+- Framework-specific code
+- Database concerns
+- Infrastructure logic
+
+## Implementation Guidelines
+- Use static factory methods for entity creation
+- Implement immutability where possible
+- Expose getters, not direct property access
+- Keep validation logic inside entities
+- No imports from other layers (application, infrastructure, presentation)
+
+## Folder Structure
+```
+📂 domain
+ ┣ 📂 entities
+ ┃ ┣ 📜 User.ts
+ ┃ ┗ 📜 Product.ts
+ ┣ 📂 events
+ ┃ ┣ 📜 UserCreatedEvent.ts
+ ┃ ┗ 📜 OrderPlacedEvent.ts
+ ┣ 📂 repositories
+ ┃ ┣ 📜 UserRepo.ts
+ ┃ ┗ 📜 ProductRepo.ts
+ ┗ 📂 exceptions
+   ┣ 📜 InvalidEmailException.ts
+   ┗ 📜 InsufficientFundsException.ts
+```
+
+## Code Examples
+
+### Entity Example (User.ts)
+```typescript
+// Simple entity
+export interface UserProps {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}
+
+export class User {
+  private props: UserProps;
+  
+  private constructor(props: UserProps) {
+    this.props = props;
+  }
+  
+  // Factory method
+  public static create(props: UserProps): User {
+    // Validation can be added here
+    return new User(props);
+  }
+  
+  // Getters
+  public getId(): string {
+    return this.props.id;
+  }
+  
+  public getName(): string {
+    return this.props.name;
+  }
+  
+  public getEmail(): string {
+    return this.props.email;
+  }
+  
+  public getCreatedAt(): Date {
+    return this.props.createdAt;
+  }
+}
+```

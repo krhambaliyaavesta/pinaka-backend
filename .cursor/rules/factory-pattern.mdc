@@ -1,0 +1,112 @@
+---
+description: Guidelines for implementing the factory pattern to manage dependency injection across the application. This rule explains how to create factory classes for use cases, structure dependencies, and manage object creation to ensure loose coupling.
+globs: 
+alwaysApply: false
+---
+# Factory Pattern & Dependency Injection
+
+Rule type: Design Pattern
+Rule description: Guidelines for implementing the factory pattern to manage dependency injection across the application. This rule explains how to create factory classes for use cases, structure dependencies, and manage object creation to ensure loose coupling.
+
+## Structure
+- Each use case should have its own factory class
+- Factories should create and wire up all dependencies
+- Factory methods should be static
+- Factory classes should follow naming convention: `UseCaseNameFactory`
+- Factories should be placed in the same directory as their corresponding use case
+
+## Implementation Guidelines
+- Factories should instantiate all required dependencies
+- Repository implementations should be created inside factories
+- Services should be injected rather than created directly in use cases
+- Factory classes should handle all external dependencies
+- Factories should create infrastructure implementations, not just interfaces
+
+## Implementation Example
+```typescript
+// GetListingsByLocationFactory.ts
+import { RevBaseFactory } from '@app/clean-architecture/shared/factories/revBaseFactory';
+import { IndexResolverImpl } from '../../../infrastructure/repositories/indexResolverImpl';
+import { ListingRepoImpl } from '../../../infrastructure/repositories/listingRepoImpl';
+import { GetListingsByLocationUseCase } from './getListingsByLoctions';
+import { RevBaseLoggerService } from '@app/clean-architecture/shared/services/revBaseLoggerService';
+import { LocationRepoImpl } from '../../../infrastructure/repositories/locationRepoImpl';
+import { AgencyRepoImpl } from '../../../infrastructure/repositories/agencyRepoImpl';
+import { AgentRepoImpl } from '../../../infrastructure/repositories/agentRepoImpl';
+
+export class GetListingsByLocationFactory {
+  static create(req: any) {
+    // Create core services
+    const revBase = RevBaseFactory.create(req);
+    const loggerService = new RevBaseLoggerService(revBase);
+    
+    // Create repositories
+    const indexResolver = new IndexResolverImpl();
+    const listingRepo = new ListingRepoImpl(revBase, indexResolver);
+    const locationRepo = new LocationRepoImpl(revBase, indexResolver);
+    const agencyRepo = new AgencyRepoImpl(revBase, indexResolver);
+    const agentRepo = new AgentRepoImpl(revBase, indexResolver);
+    
+    // Create and return the use case with all dependencies
+    const useCase = new GetListingsByLocationUseCase(
+      listingRepo,
+      locationRepo,
+      agencyRepo,
+      agentRepo
+    );
+
+    return { useCase, loggerService };
+  }
+}
+```
+
+## Best Practices
+- Use static create() methods for instantiation
+- Factories should handle environment-specific configuration
+- Keep factories focused on dependency wiring, not business logic
+- Consider using a dependency injection container for complex applications
+- Factories should be lightweight and easily testable
+- Use interface types for return values when possible
+- Return the use case and any necessary supporting services (like loggers)
+
+## Factory Hierarchy
+- Base factories for common dependencies (e.g., `RevBaseFactory`)
+- Module-specific factories for module dependencies
+- Use case factories for specific use case dependencies
+
+## Testability
+- Factories should allow for dependency overrides in test environments
+- Consider creating test-specific factory methods
+- Mock external dependencies for unit testing
+- Example of a test factory method:
+  ```typescript
+  static createForTesting(mockListingRepo, mockLocationRepo) {
+    return new GetListingsByLocationUseCase(
+      mockListingRepo,
+      mockLocationRepo,
+      new MockAgencyRepo(),
+      new MockAgentRepo()
+    );
+  }
+  ```
+
+## Controller Usage
+Controllers should use factories to create use cases, not directly instantiate dependencies:
+```typescript
+export class ListingsController {
+  getListingsByLocation(req: Request, res: Response) {
+    try {
+      const { useCase, loggerService } = GetListingsByLocationFactory.create(req);
+      const result = await useCase.execute(req.body);
+      return res.status(200).json(result);
+    } catch (error) {
+      // Error handling
+    }
+  }
+}
+```
+
+## Generic Examples
+- Use Case Factory: `application/useCases/createUser/CreateUserFactory.ts`
+- Base Factory: `shared/factories/BaseFactory.ts`
+- Module Factory: `modules/users/UserModuleFactory.ts`

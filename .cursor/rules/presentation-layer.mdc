@@ -1,0 +1,253 @@
+---
+description: Guidelines for the presentation layer which handles external interfaces like HTTP APIs. This rule explains how to implement controllers, routes, validation, and middleware while ensuring that business logic remains in the appropriate layers and the presentation layer focuses purely on I/O concerns.
+globs: 
+alwaysApply: false
+---
+# Presentation Layer
+
+Rule type: Presentation Layer
+Rule description: Guidelines for the presentation layer which handles external interfaces like HTTP APIs. This rule explains how to implement controllers, routes, validation, and middleware while ensuring that business logic remains in the appropriate layers and the presentation layer focuses purely on I/O concerns.
+
+## Core Concept
+The presentation layer is responsible for handling the delivery mechanism of the application (HTTP, CLI, etc.). It transforms incoming requests into application layer DTOs, invokes the appropriate use cases, and formats responses for the client.
+
+## What Belongs in Presentation Layer
+- **Controllers**: Handle requests and coordinate responses
+- **Routes**: Define endpoints and connect them to controllers
+- **Validation Schemas**: Validate incoming request data
+- **Middleware**: Handle cross-cutting concerns like authentication
+
+## What Does NOT Belong in Presentation Layer
+- Business logic (should be in domain or application layer)
+- Direct database access
+- Domain entity manipulation
+- Use case implementation details
+
+## Folder Structure
+```
+📂 presentation
+ ┣ 📂 controllers
+ ┃ ┗ 📜 UserController.ts
+ ┣ 📂 routes
+ ┃ ┗ 📜 userRoutes.ts
+ ┣ 📂 validation
+ ┃ ┗ 📜 UserValidationSchema.ts
+ ┣ 📂 middleware
+ ┃ ┣ 📜 authMiddleware.ts
+ ┃ ┗ 📜 errorHandlerMiddleware.ts
+ ┗ 📂 interfaces
+   ┗ 📜 Controller.ts
+```
+
+## Controller Responsibilities
+- Handle HTTP requests and responses
+- Validate input data
+- Transform request data into use case DTOs
+- Execute the appropriate use case via factory
+- Transform use case response into HTTP response
+- Handle errors and return appropriate status codes
+
+## Validation
+- Input validation should be separated from controller logic
+- Use validation schemas for request validation
+- Return descriptive error messages for validation failures
+- Validate business rules in the domain/application layer, not in controllers
+
+## Error Handling
+- Create consistent error response format
+- Map domain and application errors to HTTP status codes
+- Handle unexpected errors gracefully
+- Log errors appropriately
+- Don't expose internal error details to clients
+
+## Code Examples
+
+### Controller Example
+```typescript
+// UserController.ts
+import { Request, Response } from 'express';
+import { CreateUserFactory } from '../../application/useCases/createUser/CreateUserFactory';
+import { GetUserByIdFactory } from '../../application/useCases/getUserById/GetUserByIdFactory';
+import { validate } from '../validation/validator';
+import { createUserSchema } from '../validation/UserValidationSchema';
+
+export class UserController {
+  async createUser(req: Request, res: Response) {
+    try {
+      // Validate request data
+      const validationResult = validate(req.body, createUserSchema);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          success: false, 
+          errors: validationResult.errors 
+        });
+      }
+
+      // Use factory to create use case with dependencies
+      const { useCase, loggerService } = CreateUserFactory.create();
+      
+      // Map request data to DTO
+      const requestDto = {
+        id: req.body.id,
+        name: req.body.name,
+        email: req.body.email
+      };
+      
+      // Execute use case
+      const result = await useCase.execute(requestDto);
+      
+      // Log success
+      loggerService.info('User created successfully', { userId: result.id });
+      
+      // Return successful response
+      return res.status(201).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      // Log error
+      console.error('Error creating user:', error);
+      
+      // Return appropriate error response
+      if (error.name === 'ValidationError') {
+        return res.status(400).json({ 
+          success: false, 
+          error: error.message 
+        });
+      }
+      
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error' 
+      });
+    }
+  }
+
+  async getUserById(req: Request, res: Response) {
+    try {
+      const userId = req.params.id;
+      
+      // Use factory to create use case
+      const { useCase } = GetUserByIdFactory.create();
+      
+      // Execute use case
+      const result = await useCase.execute({ userId });
+      
+      // Return successful response
+      return res.status(200).json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      // Handle specific error types
+      if (error.name === 'UserNotFoundError') {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'User not found' 
+        });
+      }
+      
+      // Return generic error for unhandled errors
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Internal server error' 
+      });
+    }
+  }
+}
+```
+
+### Routes Example
+```typescript
+// userRoutes.ts
+import { Router } from 'express';
+import { UserController } from '../controllers/UserController';
+import { authMiddleware } from '../middleware/authMiddleware';
+
+const router = Router();
+const userController = new UserController();
+
+// Public routes
+router.get('/users/:id', userController.getUserById);
+
+// Protected routes
+router.post('/users', authMiddleware, userController.createUser);
+router.put('/users/:id', authMiddleware, userController.updateUser);
+router.delete('/users/:id', authMiddleware, userController.deleteUser);
+
+export default router;
+```
+
+### Validation Schema Example
+```typescript
+// UserValidationSchema.ts
+export const createUserSchema = {
+  type: 'object',
+  required: ['name', 'email'],
+  properties: {
+    name: {
+      type: 'string',
+      minLength: 2,
+      maxLength: 100
+    },
+    email: {
+      type: 'string',
+      format: 'email'
+    },
+    password: {
+      type: 'string',
+      minLength: 8
+    }
+  }
+};
+
+export const updateUserSchema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+      minLength: 2,
+      maxLength: 100
+    },
+    email: {
+      type: 'string',
+      format: 'email'
+    }
+  }
+};
+```
+
+### Middleware Example
+```typescript
+// authMiddleware.ts
+import { Request, Response, NextFunction } from 'express';
+import { TokenService } from '../../infrastructure/services/TokenService';
+
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Authentication required' 
+      });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    const tokenService = new TokenService();
+    
+    const decoded = tokenService.verifyToken(token);
+    
+    // Attach user info to request for use in controllers
+    req.user = decoded;
+    
+    next();
+  } catch (error) {
+    return res.status(401).json({ 
+      success: false, 
+      error: 'Invalid authentication token' 
+    });
+  }
+};
+```
