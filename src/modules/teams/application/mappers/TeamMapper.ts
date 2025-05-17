@@ -22,12 +22,12 @@ export class TeamMapper {
   public static toDTO(team: Team): TeamDTO {
     // Convert entity to plain object to avoid 'props' property in response
     const teamData = team.toObject();
-    
+
     return {
-      id: teamData.id,
+      id: teamData.id || 0,
       name: teamData.name,
       createdAt: teamData.createdAt?.toISOString() || "",
       updatedAt: teamData.updatedAt?.toISOString() || "",
     };
   }
-} 
+}
