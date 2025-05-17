@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import Joi from "joi";
 import { AppError } from "../../../../shared/errors/AppError";
-import { validate as uuidValidate } from "uuid";
+
 
 /**
  * Validation schema for creating a kudos card

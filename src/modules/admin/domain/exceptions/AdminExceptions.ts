@@ -21,3 +21,11 @@ export class NotAdminError extends AdminError {
     Object.setPrototypeOf(this, NotAdminError.prototype);
   }
 }
+
+export class UnauthorizedRoleError extends AdminError {
+  constructor(allowedRoles: string) {
+    super(`Only ${allowedRoles} can perform this action`);
+    this.name = 'UnauthorizedRoleError';
+    Object.setPrototypeOf(this, UnauthorizedRoleError.prototype);
+  }
+}

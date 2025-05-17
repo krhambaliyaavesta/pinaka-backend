@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { GetPendingUsersFactory } from '../../application/useCases/getPendingUsers/GetPendingUsersFactory';
 import { AdminModuleFactory } from '../../../../shared/factories/AdminModuleFactory';
 import { AppError } from '../../../../shared/errors/AppError';
-import { AdminError, NotAdminError } from '../../domain/exceptions/AdminExceptions';
+import { AdminError, NotAdminError, UnauthorizedRoleError } from '../../domain/exceptions/AdminExceptions';
 
 export class AdminController {
   async getPendingUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -26,7 +26,7 @@ export class AdminController {
         data: result
       });
     } catch (error) {
-      if (error instanceof NotAdminError) {
+      if (error instanceof NotAdminError || error instanceof UnauthorizedRoleError) {
         next(new AppError(error.message, 403));
       } else if (error instanceof AdminError) {
         next(new AppError(error.message, 400));
