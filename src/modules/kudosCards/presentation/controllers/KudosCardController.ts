@@ -1,23 +1,19 @@
 import { Request, Response, NextFunction } from "express";
-import { KudosCardUseCaseFactory } from "../../application/useCases/kudosCard/KudosCardUseCaseFactory";
 import { AppError } from "../../../../shared/errors/AppError";
 import {
   KudosCardNotFoundError,
-  TeamNotFoundError,
-  CategoryNotFoundError,
   KudosCardValidationError,
   InsufficientPermissionsError,
   UnauthorizedKudosCardAccessError,
 } from "../../domain/exceptions/KudosCardExceptions";
 import { RequestWithUser } from "../../../../shared/types/express";
-import { PostgresService } from "../../../../shared/services/PostgresService";
-import { KudosCardRepoFactory } from "../../infrastructure/repositories/KudosCardRepoFactory";
-import { TeamRepoFactory } from "../../infrastructure/repositories/TeamRepoFactory";
-import { CategoryRepoFactory } from "../../infrastructure/repositories/CategoryRepoFactory";
-import { UserRepoFactory } from "../../../auth/infrastructure/repositories/UserRepoFactory";
 import { CreateKudosCardFactory } from "../../application/useCases/createKudosCard/CreateKudosCardFactory";
 import { GetKudosCardByIdFactory } from "../../application/useCases/getKudosCardById/GetKudosCardByIdFactory";
-import { DatabaseServiceFactory } from "../../../../shared/services/DatabaseServiceFactory";
+import { GetKudosCardsFactory } from "../../application/useCases/getKudosCards/GetKudosCardsFactory";
+import { UpdateKudosCardFactory } from "../../application/useCases/updateKudosCard/UpdateKudosCardFactory";
+import { DeleteKudosCardFactory } from "../../application/useCases/deleteKudosCard/DeleteKudosCardFactory";
+import { TeamNotFoundError } from "../../../teams/domain/exceptions/TeamExceptions";
+import { CategoryNotFoundError } from "../../../categories/domain/exceptions/CategoryExceptions";
 
 /**
  * Controller for handling kudos card-related API requests
@@ -32,7 +28,7 @@ export class KudosCardController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const useCase = KudosCardUseCaseFactory.createGetKudosCardsUseCase();
+      const { useCase } = GetKudosCardsFactory.create();
       const kudosCards = await useCase.execute(req.query);
 
       res.status(200).json({
@@ -52,25 +48,11 @@ export class KudosCardController {
     try {
       const { id } = req.params;
       
-      // Get database service
-      const dbService = DatabaseServiceFactory.getDatabase();
+      // Create use case through factory
+      const {useCase} = GetKudosCardByIdFactory.create();
       
-      // Get repositories
-      const kudosCardRepo = KudosCardRepoFactory.getRepo(dbService);
-      const teamRepo = TeamRepoFactory.getRepo(dbService);
-      const categoryRepo = CategoryRepoFactory.getRepo(dbService);
-      const userRepo = UserRepoFactory.createUserRepo();
-      
-      // Create use case
-      const getKudosCardByIdUseCase = GetKudosCardByIdFactory.create(
-        kudosCardRepo,
-        teamRepo,
-        categoryRepo,
-        userRepo
-      );
-      
-      // Execute use case
-      const result = await getKudosCardByIdUseCase.execute({ id });
+      // Execute use case with string ID
+      const result = await useCase.execute(id);
       
       res.status(200).json({
         status: "success",
@@ -98,40 +80,24 @@ export class KudosCardController {
       if (!userId) {
         throw new AppError("Authentication required", 401);
       }
-
-      // Get database service
-      const dbService = DatabaseServiceFactory.getDatabase();
       
-      // Get repositories
-      const kudosCardRepo = KudosCardRepoFactory.getRepo(dbService);
-      const teamRepo = TeamRepoFactory.getRepo(dbService);
-      const categoryRepo = CategoryRepoFactory.getRepo(dbService);
-      const userRepo = UserRepoFactory.createUserRepo();
-      
-      // Create use case
-      const createKudosCardUseCase = CreateKudosCardFactory.create(
-        kudosCardRepo,
-        teamRepo,
-        categoryRepo,
-        userRepo
-      );
+      // Create use case through factory
+      const { useCase } = CreateKudosCardFactory.create();
       
       // Execute use case
-      const result = await createKudosCardUseCase.execute(req.body, userId);
+      const result = await useCase.execute(req.body, userId);
       
       res.status(201).json({
         status: "success",
         data: result,
       });
     } catch (error) {
-      if (error instanceof TeamNotFoundError) {
+      if (error instanceof KudosCardValidationError) {
+        next(new AppError(`Validation error: ${error.message}`, 400));
+      } else if (error instanceof TeamNotFoundError) {
         next(new AppError(`Team not found: ${error.message}`, 404));
       } else if (error instanceof CategoryNotFoundError) {
         next(new AppError(`Category not found: ${error.message}`, 404));
-      } else if (error instanceof InsufficientPermissionsError) {
-        next(new AppError(`Insufficient permissions: ${error.message}`, 403));
-      } else if (error instanceof KudosCardValidationError) {
-        next(new AppError(`Validation error: ${error.message}`, 400));
       } else {
         next(error);
       }
@@ -154,7 +120,7 @@ export class KudosCardController {
       }
 
       const { id } = req.params;
-      const useCase = KudosCardUseCaseFactory.createUpdateKudosCardUseCase();
+      const { useCase } = UpdateKudosCardFactory.create();
       const kudosCard = await useCase.execute(id, req.body, req.user.userId);
 
       res.status(200).json({
@@ -197,7 +163,7 @@ export class KudosCardController {
       }
 
       const { id } = req.params;
-      const useCase = KudosCardUseCaseFactory.createDeleteKudosCardUseCase();
+      const { useCase } = DeleteKudosCardFactory.create();
       await useCase.execute(id, req.user.userId);
 
       res.status(204).json({
@@ -215,104 +181,6 @@ export class KudosCardController {
       } else {
         next(error);
       }
-    }
-  }
-
-  /**
-   * Get top recipients
-   */
-  async getTopRecipients(
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const period = req.query.period as string;
-
-      const useCase = KudosCardUseCaseFactory.createGetTopRecipientsUseCase();
-      const result = await useCase.execute(limit, period);
-
-      res.status(200).json({
-        status: "success",
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get top teams
-   */
-  async getTopTeams(
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const period = req.query.period as string;
-
-      const useCase = KudosCardUseCaseFactory.createGetTopTeamsUseCase();
-      const result = await useCase.execute(limit, period);
-
-      res.status(200).json({
-        status: "success",
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get trending categories
-   */
-  async getTrendingCategories(
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const period = req.query.period as string;
-
-      const useCase =
-        KudosCardUseCaseFactory.createGetTrendingCategoriesUseCase();
-      const result = await useCase.execute(limit, period);
-
-      res.status(200).json({
-        status: "success",
-        data: result,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * Get trending keywords
-   */
-  async getTrendingKeywords(
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
-    try {
-      const limit = parseInt(req.query.limit as string, 10) || 10;
-      const period = req.query.period as string;
-
-      const useCase =
-        KudosCardUseCaseFactory.createGetTrendingKeywordsUseCase();
-      const result = await useCase.execute(limit, period);
-
-      res.status(200).json({
-        status: "success",
-        data: result,
-      });
-    } catch (error) {
-      next(error);
     }
   }
 }

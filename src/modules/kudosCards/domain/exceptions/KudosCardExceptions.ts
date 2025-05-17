@@ -19,24 +19,6 @@ export class KudosCardNotFoundError extends KudosCardDomainError {
 }
 
 /**
- * Thrown when a requested team is not found
- */
-export class TeamNotFoundError extends KudosCardDomainError {
-  constructor(id: number) {
-    super(`Team with ID ${id} not found`);
-  }
-}
-
-/**
- * Thrown when a requested category is not found
- */
-export class CategoryNotFoundError extends KudosCardDomainError {
-  constructor(id: number) {
-    super(`Category with ID ${id} not found`);
-  }
-}
-
-/**
  * Thrown when a user attempts to modify a kudos card they didn't create
  */
 export class UnauthorizedKudosCardAccessError extends KudosCardDomainError {

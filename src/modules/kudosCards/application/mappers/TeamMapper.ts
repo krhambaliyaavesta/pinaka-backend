@@ -1,4 +1,4 @@
-import { Team, TeamProps } from "../../domain/entities/Team";
+import { Team, TeamProps } from "../../../teams/domain/entities/Team";
 import { CreateTeamDTO, TeamDTO, UpdateTeamDTO } from "../dtos/TeamDTOs";
 
 /**

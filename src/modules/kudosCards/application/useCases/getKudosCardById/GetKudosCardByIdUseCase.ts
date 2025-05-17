@@ -1,11 +1,12 @@
 import { KudosCardRepo } from "../../../domain/repositories/KudosCardRepo";
-import { TeamRepo } from "../../../domain/repositories/TeamRepo";
-import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
+import { TeamRepo } from "../../../../teams/domain/repositories/TeamRepo";
+import { CategoryRepo } from "../../../../categories/domain/repositories/CategoryRepo";
 import { UserRepo } from "../../../../auth/domain/repositories/UserRepo";
-import { GetKudosCardByIdMapper } from "./GetKudosCardByIdMapper";
-import { GetKudosCardByIdRequestDto } from "./GetKudosCardByIdRequestDto";
-import { GetKudosCardByIdResponseDto } from "./GetKudosCardByIdResponseDto";
+import { KudosCardMapper } from "../../mappers/KudosCardMapper";
+import { KudosCardDTO } from "../../dtos/KudosCardDTOs";
 import { KudosCardNotFoundError } from "../../../domain/exceptions/KudosCardExceptions";
+import { TeamNotFoundError } from "../../../../teams/domain/exceptions/TeamExceptions";
+import { CategoryNotFoundError } from "../../../../categories/domain/exceptions/CategoryExceptions";
 
 /**
  * Use case for getting a kudos card by ID
@@ -20,29 +21,29 @@ export class GetKudosCardByIdUseCase {
 
   /**
    * Execute the use case
-   * @param requestDto The request with the kudos card ID
+   * @param id The ID of the kudos card to retrieve
    * @returns Promise resolving to the kudos card data
    * @throws KudosCardNotFoundError if the kudos card with the given ID doesn't exist
+   * @throws TeamNotFoundError if the team does not exist
+   * @throws CategoryNotFoundError if the category does not exist
    */
-  async execute(
-    requestDto: GetKudosCardByIdRequestDto
-  ): Promise<GetKudosCardByIdResponseDto> {
+  async execute(id: string): Promise<KudosCardDTO> {
     // Find the kudos card
-    const kudosCard = await this.kudosCardRepo.findById(requestDto.id);
+    const kudosCard = await this.kudosCardRepo.findById(id);
     if (!kudosCard) {
-      throw new KudosCardNotFoundError(requestDto.id);
+      throw new KudosCardNotFoundError(id);
     }
 
     // Get team details
     const team = await this.teamRepo.findById(kudosCard.teamId);
     if (!team) {
-      throw new Error(`Team with ID ${kudosCard.teamId} not found`);
+      throw new TeamNotFoundError(kudosCard.teamId);
     }
 
     // Get category details
     const category = await this.categoryRepo.findById(kudosCard.categoryId);
     if (!category) {
-      throw new Error(`Category with ID ${kudosCard.categoryId} not found`);
+      throw new CategoryNotFoundError(kudosCard.categoryId);
     }
 
     // Get creator details
@@ -51,8 +52,8 @@ export class GetKudosCardByIdUseCase {
       ? `${creator.firstName} ${creator.lastName}`
       : "Unknown User";
 
-    // Return the response DTO
-    return GetKudosCardByIdMapper.toResponseDto(
+    // Return the DTO using the shared mapper
+    return KudosCardMapper.toDTO(
       kudosCard,
       team.name,
       category.name,

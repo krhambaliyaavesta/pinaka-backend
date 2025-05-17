@@ -42,26 +42,4 @@ router.delete(
   kudosCardController.deleteKudosCard
 );
 
-// Analytics routes
-router.get(
-  "/analytics/top-recipients",
-  authMiddleware,
-  kudosCardController.getTopRecipients
-);
-router.get(
-  "/analytics/top-teams",
-  authMiddleware,
-  kudosCardController.getTopTeams
-);
-router.get(
-  "/analytics/trending-categories",
-  authMiddleware,
-  kudosCardController.getTrendingCategories
-);
-router.get(
-  "/analytics/trending-keywords",
-  authMiddleware,
-  kudosCardController.getTrendingKeywords
-);
-
 export default router;

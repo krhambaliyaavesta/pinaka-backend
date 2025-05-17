@@ -1,4 +1,4 @@
-import { Category, CategoryProps } from "../../domain/entities/Category";
+import { Category, CategoryProps } from "../../../categories/domain/entities/Category";
 import {
   CategoryDTO,
   CreateCategoryDTO,
@@ -39,6 +39,7 @@ export class CategoryMapper {
    */
   public static toDomain(createCategoryDTO: CreateCategoryDTO): CategoryProps {
     return {
+      id: 0, // Temporary ID that will be replaced by the database
       name: createCategoryDTO.name,
     };
   }

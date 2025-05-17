@@ -8,7 +8,10 @@ import { DBInitService } from "./shared/services/DBInitService";
 // Import routes
 import authRoutes from "./modules/auth/presentation/routes/authRoutes";
 import adminRoutes from "./modules/admin/presentation/routes/adminRoutes";
-import kudosCardsRoutes from "./modules/kudosCards/presentation/routes";
+import kudosCardRoutes from "./modules/kudosCards/presentation/routes/kudosCardRoutes";
+import teamRoutes from "./modules/teams/presentation/routes/teamRoutes";
+import categoryRoutes from "./modules/categories/presentation/routes/categoryRoutes"; 
+import analyticsRoutes from "./modules/analytics/presentation/routes/analyticsRoutes";
 
 const app: Application = express();
 
@@ -29,7 +32,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api", kudosCardsRoutes);
+app.use("/api/kudos-cards", kudosCardRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {

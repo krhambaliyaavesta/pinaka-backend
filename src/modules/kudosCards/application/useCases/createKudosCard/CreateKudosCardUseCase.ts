@@ -1,17 +1,17 @@
 import { KudosCardRepo } from "../../../domain/repositories/KudosCardRepo";
-import { TeamRepo } from "../../../domain/repositories/TeamRepo";
-import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
+import { TeamRepo } from "../../../../teams/domain/repositories/TeamRepo";
+import { CategoryRepo } from "../../../../categories/domain/repositories/CategoryRepo";
 import { CreateKudosCardMapper } from "./CreateKudosCardMapper";
 import { CreateKudosCardRequestDto } from "./CreateKudosCardRequestDto";
 import { CreateKudosCardResponseDto } from "./CreateKudosCardResponseDto";
 import { KudosCard } from "../../../domain/entities/KudosCard";
 import {
   KudosCardValidationError,
-  TeamNotFoundError,
-  CategoryNotFoundError,
   InsufficientPermissionsError,
 } from "../../../domain/exceptions/KudosCardExceptions";
 import { UserRepo } from "../../../../auth/domain/repositories/UserRepo";
+import { TeamNotFoundError } from "../../../../teams/domain/exceptions/TeamExceptions";
+import { CategoryNotFoundError } from "../../../../categories/domain/exceptions/CategoryExceptions";
 
 /**
  * Use case for creating a new kudos card
