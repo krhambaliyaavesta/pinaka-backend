@@ -17,7 +17,8 @@ export class GetKudosCardByIdMapper {
     kudosCard: KudosCard,
     teamName: string,
     categoryName: string,
-    creatorName: string
+    creatorName: string,
+    senderName: string
   ): GetKudosCardByIdResponseDto {
     return {
       id: kudosCard.id,
@@ -29,8 +30,10 @@ export class GetKudosCardByIdMapper {
       message: kudosCard.message,
       createdBy: kudosCard.createdBy,
       creatorName: creatorName,
+      sentBy: kudosCard.sentBy || kudosCard.createdBy,
+      senderName: senderName,
       createdAt: kudosCard.createdAt.toISOString(),
       updatedAt: kudosCard.updatedAt.toISOString(),
     };
   }
-} 
+}
