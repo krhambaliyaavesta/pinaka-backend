@@ -50,6 +50,12 @@ export class KudosCardRepoPgImpl implements KudosCardRepo {
         params.push(filters.createdBy);
       }
 
+      if (filters?.sentBy) {
+        paramIndex++;
+        query += ` AND sent_by = $${paramIndex}`;
+        params.push(filters.sentBy);
+      }
+
       if (filters?.startDate) {
         paramIndex++;
         query += ` AND created_at >= $${paramIndex}`;
@@ -97,8 +103,8 @@ export class KudosCardRepoPgImpl implements KudosCardRepo {
       const now = new Date();
       const [result] = await this.db.query(
         `INSERT INTO kudos_cards 
-         (recipient_name, team_id, category_id, message, created_by, created_at, updated_at) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) 
+         (recipient_name, team_id, category_id, message, created_by, sent_by, created_at, updated_at) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
          RETURNING *`,
         [
           kudosCard.recipientName,
@@ -106,6 +112,7 @@ export class KudosCardRepoPgImpl implements KudosCardRepo {
           kudosCard.categoryId,
           kudosCard.message,
           kudosCard.createdBy,
+          kudosCard.sentBy || kudosCard.createdBy,
           now,
           now,
         ]
@@ -428,6 +435,7 @@ export class KudosCardRepoPgImpl implements KudosCardRepo {
       categoryId: row.category_id,
       message: row.message,
       createdBy: row.created_by,
+      sentBy: row.sent_by,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       deletedAt: row.deleted_at,

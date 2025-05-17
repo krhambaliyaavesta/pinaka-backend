@@ -24,14 +24,14 @@ export class UpdateUserUseCase {
 
     if (!isAdmin && !isSelfUpdate && !isLead) {
       throw new UnauthorizedActionError(
-        "Only admin users can update other users"
+        "Only admin and lead users can update other users"
       );
     }
 
     // If user is not admin and trying to change role, deny the action
     if (!isAdmin && dto.role !== undefined && !isLead) {
       throw new UnauthorizedActionError(
-        "Only admin users can change user roles"
+        "Only admin and lead users can change user roles"
       );
     }
 

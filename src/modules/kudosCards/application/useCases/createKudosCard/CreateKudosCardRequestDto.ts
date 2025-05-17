@@ -6,4 +6,5 @@ export interface CreateKudosCardRequestDto {
   teamId: number;
   categoryId: number;
   message: string;
-} 
+  sentBy?: string; // Optional ID of user sending the kudos (if different from creator)
+}

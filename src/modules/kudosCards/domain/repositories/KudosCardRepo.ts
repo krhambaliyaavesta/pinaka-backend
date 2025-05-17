@@ -10,6 +10,7 @@ export interface KudosCardFilters {
   startDate?: Date;
   endDate?: Date;
   createdBy?: string;
+  sentBy?: string;
   includeDeleted?: boolean;
 }
 

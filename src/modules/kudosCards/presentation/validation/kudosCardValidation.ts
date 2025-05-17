@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import Joi from "joi";
 import { AppError } from "../../../../shared/errors/AppError";
 
-
 /**
  * Validation schema for creating a kudos card
  */
@@ -27,6 +26,9 @@ const createKudosCardSchema = Joi.object({
   message: Joi.string().trim().min(5).required().messages({
     "string.min": "Message must be at least 5 characters",
     "any.required": "Message is required",
+  }),
+  sentBy: Joi.string().uuid().messages({
+    "string.guid": "Sender ID must be a valid UUID",
   }),
 });
 
@@ -63,6 +65,7 @@ const filterKudosCardSchema = Joi.object({
   startDate: Joi.date().iso(),
   endDate: Joi.date().iso().min(Joi.ref("startDate")),
   createdBy: Joi.string().uuid(),
+  sentBy: Joi.string().uuid(),
   page: Joi.number().integer().min(1),
   limit: Joi.number().integer().min(1).max(100),
   sortBy: Joi.string().valid("createdAt", "updatedAt", "recipientName"),

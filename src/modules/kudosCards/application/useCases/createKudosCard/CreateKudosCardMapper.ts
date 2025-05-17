@@ -12,12 +12,16 @@ export class CreateKudosCardMapper {
    * @param userId The ID of the user creating the kudos card
    * @returns Object with domain entity properties
    */
-  static toDomain(dto: CreateKudosCardRequestDto, userId: string): {
+  static toDomain(
+    dto: CreateKudosCardRequestDto,
+    userId: string
+  ): {
     recipientName: string;
     teamId: number;
     categoryId: number;
     message: string;
     createdBy: string;
+    sentBy?: string;
   } {
     return {
       recipientName: dto.recipientName,
@@ -25,6 +29,7 @@ export class CreateKudosCardMapper {
       categoryId: dto.categoryId,
       message: dto.message,
       createdBy: userId,
+      sentBy: dto.sentBy,
     };
   }
 
@@ -34,13 +39,15 @@ export class CreateKudosCardMapper {
    * @param teamName The name of the team
    * @param categoryName The name of the category
    * @param creatorName The name of the creator
+   * @param senderName The name of the sender (if different from creator)
    * @returns Response DTO
    */
   static toResponseDto(
     kudosCard: KudosCard,
     teamName: string,
     categoryName: string,
-    creatorName: string
+    creatorName: string,
+    senderName: string
   ): CreateKudosCardResponseDto {
     return {
       id: kudosCard.id,
@@ -52,8 +59,10 @@ export class CreateKudosCardMapper {
       message: kudosCard.message,
       createdBy: kudosCard.createdBy,
       creatorName: creatorName,
+      sentBy: kudosCard.sentBy || kudosCard.createdBy,
+      senderName: senderName,
       createdAt: kudosCard.createdAt.toISOString(),
       updatedAt: kudosCard.updatedAt.toISOString(),
     };
   }
-} 
+}

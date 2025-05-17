@@ -40,28 +40,37 @@ export class CreateKudosCardUseCase {
   ): Promise<CreateKudosCardResponseDto> {
     try {
       // Check if user has permission to create kudos cards (role = lead or admin)
-      const user = await this.userRepo.findById(userId);
-      if (!user) {
+      const creator = await this.userRepo.findById(userId);
+      if (!creator) {
         throw new Error("User not found");
       }
 
-      if (!(user.role === 1 || user.role === 2)) {
+      if (!(creator.role === 1 || creator.role === 2)) {
         // 1 = admin, 2 = lead
         throw new InsufficientPermissionsError("Tech Lead or Admin");
       }
 
+      // If sentBy is specified (creating on behalf of someone), verify that user exists
+      let sender = creator;
+      let senderName = `${creator.firstName} ${creator.lastName}`;
+
+      if (requestDto.sentBy && requestDto.sentBy !== userId) {
+        const potentialSender = await this.userRepo.findById(requestDto.sentBy);
+        if (!potentialSender) {
+          throw new Error(`User with ID ${requestDto.sentBy} not found`);
+        }
+        sender = potentialSender;
+        senderName = `${sender.firstName} ${sender.lastName}`;
+      }
+
       // Verify team exists
-      const team = await this.teamRepo.findById(
-        requestDto.teamId
-      );
+      const team = await this.teamRepo.findById(requestDto.teamId);
       if (!team) {
         throw new TeamNotFoundError(requestDto.teamId);
       }
 
       // Verify category exists
-      const category = await this.categoryRepo.findById(
-        requestDto.categoryId
-      );
+      const category = await this.categoryRepo.findById(requestDto.categoryId);
       if (!category) {
         throw new CategoryNotFoundError(requestDto.categoryId);
       }
@@ -73,7 +82,8 @@ export class CreateKudosCardUseCase {
         teamId: requestDto.teamId,
         categoryId: requestDto.categoryId,
         message: requestDto.message,
-        createdBy: userId
+        createdBy: userId,
+        sentBy: requestDto.sentBy,
       };
 
       // Create the domain entity
@@ -87,7 +97,8 @@ export class CreateKudosCardUseCase {
         savedKudosCard,
         team.name,
         category.name,
-        `${user.firstName} ${user.lastName}`
+        `${creator.firstName} ${creator.lastName}`,
+        senderName
       );
     } catch (error) {
       if (
@@ -103,4 +114,4 @@ export class CreateKudosCardUseCase {
       throw error;
     }
   }
-} 
+}

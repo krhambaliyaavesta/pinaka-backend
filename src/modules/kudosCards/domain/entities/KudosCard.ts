@@ -9,6 +9,7 @@ export interface KudosCardProps {
   categoryId: number;
   message: string;
   createdBy: string;
+  sentBy?: string;
   createdAt?: Date;
   updatedAt?: Date;
   deletedAt?: Date | null;
@@ -70,6 +71,10 @@ export class KudosCard {
 
   public get createdBy(): string {
     return this.props.createdBy;
+  }
+
+  public get sentBy(): string | undefined {
+    return this.props.sentBy || this.props.createdBy;
   }
 
   public get createdAt(): Date {
