@@ -19,7 +19,8 @@ export class SignUpMapper {
       email: dto.email,
       password: dto.password,
       firstName: dto.firstName,
-      lastName: dto.lastName
+      lastName: dto.lastName,
+      role: 3 // Explicitly set role to 3 (member)
     };
   }
 } 

@@ -18,6 +18,9 @@ interface DatabaseConfig {
   password: string;
   database: string;
   connectionTimeoutMillis: number;
+  ssl: {
+    rejectUnauthorized: boolean;
+  };
 }
 
 interface TableCount {
@@ -31,7 +34,10 @@ const config: DatabaseConfig = {
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'Nirupa@22',
   database: process.env.DB_NAME || 'auth_system',
-  connectionTimeoutMillis: 5000
+  connectionTimeoutMillis: 5000,
+  ssl: {
+    rejectUnauthorized: false
+  }
 };
 
 // Create a connection pool

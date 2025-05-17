@@ -5,6 +5,6 @@ export interface SignInResponseDto {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    role: number;
   };
 } 

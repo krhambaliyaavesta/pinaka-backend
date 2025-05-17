@@ -3,5 +3,5 @@ export interface SignUpResponseDto {
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
+  role: number;
 } 

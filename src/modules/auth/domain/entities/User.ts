@@ -8,7 +8,7 @@ export interface UserProps {
   password: string | Password;
   firstName: string;
   lastName: string;
-  role?: string;
+  role?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -19,7 +19,7 @@ export class User {
   public readonly password: Password;
   public readonly firstName: string;
   public readonly lastName: string;
-  public readonly role: string;
+  public readonly role: number;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -29,7 +29,7 @@ export class User {
     password: Password;
     firstName: string;
     lastName: string;
-    role: string;
+    role: number;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -77,7 +77,7 @@ export class User {
       password,
       firstName: props.firstName,
       lastName: props.lastName,
-      role: props.role || 'user',
+      role: props.role || 3,
       createdAt: props.createdAt || new Date(),
       updatedAt: props.updatedAt || new Date()
     });

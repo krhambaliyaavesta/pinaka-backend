@@ -4,7 +4,7 @@ export interface UserData {
   password: string;
   first_name: string;
   last_name: string;
-  role: string;
+  role: number;
   created_at: string | Date;
   updated_at: string | Date;
 } 

@@ -4,6 +4,6 @@ export interface GetUserInfoResponseDto {
   firstName: string;
   lastName: string;
   fullName: string;
-  role: string;
+  role: number;
   createdAt: string;
 } 

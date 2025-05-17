@@ -8,7 +8,7 @@ import { TokenBlacklistService } from '../services/TokenBlacklistService';
 export interface JwtPayload {
   userId: string;
   email: string;
-  role: string;
+  role: number;
   iat?: number;
   exp?: number;
 }
@@ -63,7 +63,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 // Role-based authorization middleware
-export const authorize = (roles: string[]) => {
+export const authorize = (roles: number[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return next(new AppError('Authentication required', 401));
