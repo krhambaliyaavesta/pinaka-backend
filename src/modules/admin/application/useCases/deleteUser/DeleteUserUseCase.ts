@@ -1,5 +1,5 @@
-import { UserRepo } from '../../../domain/repositories/UserRepo';
-import { UserNotFoundError, UnauthorizedActionError } from '../../../domain/exceptions/AuthExceptions';
+import { UserRepo } from '../../../../auth/domain/repositories/UserRepo';
+import { UserNotFoundError, UnauthorizedActionError } from '../../../../auth/domain/exceptions/AuthExceptions';
 import { DeleteUserRequestDto } from './DeleteUserRequestDto';
 import { DeleteUserResponseDto } from './DeleteUserResponseDto';
 

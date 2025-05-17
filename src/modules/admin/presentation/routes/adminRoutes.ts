@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AdminController } from '../controllers/AdminController';
 import { authMiddleware } from '../../../../shared/middlewares/authMiddleware';
 import { authorizeRoles } from '../../../../shared/middlewares/roleMiddleware';
+import { validateUpdateUser } from '../validation/adminValidation';
 
 const router = Router();
 const adminController = new AdminController();
@@ -16,6 +17,22 @@ router.get(
   authMiddleware, 
   authorizeRoles([ADMIN_ROLE, LEAD_ROLE]), 
   adminController.getPendingUsers
+);
+
+// Admin-only routes for user management
+router.put(
+  '/users/:userId', 
+  authMiddleware, 
+  authorizeRoles([ADMIN_ROLE]), 
+  validateUpdateUser, 
+  adminController.updateUser
+);
+
+router.delete(
+  '/users/:userId', 
+  authMiddleware, 
+  authorizeRoles([ADMIN_ROLE]), 
+  adminController.deleteUser
 );
 
 export default router; 

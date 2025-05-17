@@ -1,4 +1,4 @@
-import { UserRepo } from '../../../domain/repositories/UserRepo';
+import { UserRepo } from '../../../../auth/domain/repositories/UserRepo';
 import { DeleteUserUseCase } from './DeleteUserUseCase';
 
 export class DeleteUserFactory {

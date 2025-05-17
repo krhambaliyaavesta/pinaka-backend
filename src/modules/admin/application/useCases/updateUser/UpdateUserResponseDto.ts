@@ -1,4 +1,4 @@
-import { ApprovalStatus } from '../../../domain/entities/UserTypes';
+import { ApprovalStatus } from '../../../../auth/domain/entities/UserTypes';
 
 export interface UpdateUserResponseDto {
   id: string;

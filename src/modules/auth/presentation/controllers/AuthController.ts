@@ -3,16 +3,13 @@ import { SignUpFactory } from '../../application/useCases/signUp/SignUpFactory';
 import { SignInFactory } from '../../application/useCases/signIn/SignInFactory';
 import { GetUserInfoFactory } from '../../application/useCases/getUserInfo/GetUserInfoFactory';
 import { LogoutFactory } from '../../application/useCases/logout/LogoutFactory';
-import { UpdateUserFactory } from '../../application/useCases/updateUser/UpdateUserFactory';
-import { DeleteUserFactory } from '../../application/useCases/deleteUser/DeleteUserFactory';
 import { AuthModuleFactory } from '../../../../shared/factories/AuthModuleFactory';
 import { AppError } from '../../../../shared/errors/AppError';
 import { 
   AuthError, 
   EmailAlreadyExistsError, 
   InvalidCredentialsError, 
-  UserNotFoundError,
-  UnauthorizedActionError
+  UserNotFoundError
 } from '../../domain/exceptions/AuthExceptions';
 
 export class AuthController {
@@ -77,43 +74,6 @@ export class AuthController {
     }
   }
 
-  async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const currentUserId = req.user?.userId;
-      const currentUserRole = req.user?.role;
-      const targetUserId = req.params.userId;
-      
-      if (!currentUserId || currentUserRole === undefined) {
-        throw new AppError('Authentication required', 401);
-      }
-
-      const useCase = UpdateUserFactory.create(AuthModuleFactory.getUserRepo());
-      
-      // Combine the userId from the route params with the data from the request body
-      const requestDto = {
-        userId: targetUserId,
-        ...req.body
-      };
-      
-      const result = await useCase.execute(requestDto, currentUserId, currentUserRole);
-      
-      res.status(200).json({
-        status: 'success',
-        data: result
-      });
-    } catch (error) {
-      if (error instanceof UserNotFoundError) {
-        next(new AppError(error.message, 404));
-      } else if (error instanceof UnauthorizedActionError) {
-        next(new AppError(error.message, 403));
-      } else if (error instanceof AuthError) {
-        next(new AppError(error.message, 400));
-      } else {
-        next(error);
-      }
-    }
-  }
-
   async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user?.userId;
@@ -135,42 +95,6 @@ export class AuthController {
       });
     } catch (error) {
       next(error);
-    }
-  }
-
-  async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      console.log('deleteUser');
-      const currentUserId = req.user?.userId;
-      const currentUserRole = req.user?.role;
-      const targetUserId = req.params.userId;
-      
-      if (!currentUserId || currentUserRole === undefined) {
-        throw new AppError('Authentication required', 401);
-      }
-
-      const useCase = DeleteUserFactory.create(AuthModuleFactory.getUserRepo());
-      
-      const requestDto = {
-        userId: targetUserId
-      };
-      
-      const result = await useCase.execute(requestDto, currentUserId, currentUserRole);
-      
-      res.status(200).json({
-        status: 'success',
-        data: result
-      });
-    } catch (error) {
-      if (error instanceof UserNotFoundError) {
-        next(new AppError(error.message, 404));
-      } else if (error instanceof UnauthorizedActionError) {
-        next(new AppError(error.message, 403));
-      } else if (error instanceof AuthError) {
-        next(new AppError(error.message, 400));
-      } else {
-        next(error);
-      }
     }
   }
 } 

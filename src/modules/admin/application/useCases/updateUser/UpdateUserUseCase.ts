@@ -1,9 +1,9 @@
-import { UserRepo } from '../../../domain/repositories/UserRepo';
-import { UserNotFoundError, UnauthorizedActionError, InvalidUserDataError } from '../../../domain/exceptions/AuthExceptions';
+import { UserRepo } from '../../../../auth/domain/repositories/UserRepo';
+import { UserNotFoundError, UnauthorizedActionError, InvalidUserDataError } from '../../../../auth/domain/exceptions/AuthExceptions';
 import { UpdateUserRequestDto } from './UpdateUserRequestDto';
 import { UpdateUserResponseDto } from './UpdateUserResponseDto';
-import { User } from '../../../domain/entities/User';
-import { ApprovalStatus } from '../../../domain/entities/UserTypes';
+import { User } from '../../../../auth/domain/entities/User';
+import { ApprovalStatus } from '../../../../auth/domain/entities/UserTypes';
 
 export class UpdateUserUseCase {
   constructor(private userRepo: UserRepo) {}
