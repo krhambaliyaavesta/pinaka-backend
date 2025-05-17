@@ -44,4 +44,12 @@ export class InvalidUserDataError extends AuthError {
     this.name = 'InvalidUserDataError';
     Object.setPrototypeOf(this, InvalidUserDataError.prototype);
   }
+}
+
+export class UnauthorizedActionError extends AuthError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnauthorizedActionError';
+    Object.setPrototypeOf(this, UnauthorizedActionError.prototype);
+  }
 } 

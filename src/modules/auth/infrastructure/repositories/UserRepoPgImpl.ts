@@ -109,6 +109,34 @@ export class UserRepoPgImpl implements UserRepo {
     }
   }
 
+  async findByApprovalStatus(status: ApprovalStatus, limit: number = 10, offset: number = 0): Promise<User[]> {
+    try {
+      const [rows] = await this.db.query(
+        'SELECT * FROM users WHERE approval_status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+        [status, limit, offset]
+      );
+
+      return rows.map((row: any) => this.mapToUser(row));
+    } catch (error) {
+      console.error('Error in findByApprovalStatus:', error);
+      throw error;
+    }
+  }
+
+  async countByApprovalStatus(status: ApprovalStatus): Promise<number> {
+    try {
+      const [result] = await this.db.query(
+        'SELECT COUNT(*) as count FROM users WHERE approval_status = $1',
+        [status]
+      );
+      
+      return parseInt(result[0].count, 10);
+    } catch (error) {
+      console.error('Error in countByApprovalStatus:', error);
+      throw error;
+    }
+  }
+
   private mapToUser(row: any): User {
     const userData: UserData = {
       id: row.id,

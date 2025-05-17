@@ -7,6 +7,7 @@ import { DBInitService } from "./shared/services/DBInitService";
 
 // Import routes
 import authRoutes from "./modules/auth/presentation/routes/authRoutes";
+import adminRoutes from "./modules/admin/presentation/routes/adminRoutes";
 import kudosCardsRoutes from "./modules/kudosCards/presentation/routes";
 
 const app: Application = express();
@@ -27,6 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api", kudosCardsRoutes);
 
 // Health check endpoint
