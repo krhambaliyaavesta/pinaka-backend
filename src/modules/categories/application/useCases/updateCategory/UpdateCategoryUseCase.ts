@@ -1,6 +1,7 @@
 import { Category } from "../../../domain/entities/Category";
 import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
 import { CategoryNotFoundError, CategoryValidationError } from "../../../domain/exceptions/CategoryExceptions";
+import { CategoryDTO, CategoryMapper } from "../../mappers/CategoryMapper";
 
 interface UpdateCategoryInput {
   name?: string;
@@ -16,9 +17,9 @@ export class UpdateCategoryUseCase {
    * Execute the use case
    * @param id Category ID to update
    * @param input Category update data
-   * @returns Promise resolving to the updated category
+   * @returns Promise resolving to the updated category DTO
    */
-  async execute(id: number, input: UpdateCategoryInput): Promise<Category> {
+  async execute(id: number, input: UpdateCategoryInput): Promise<CategoryDTO> {
     // Find the category
     const category = await this.categoryRepo.findById(id);
     if (!category) {
@@ -32,7 +33,10 @@ export class UpdateCategoryUseCase {
       }
 
       // Persist the updated category
-      return await this.categoryRepo.update(category);
+      const updatedCategory = await this.categoryRepo.update(category);
+      
+      // Transform to DTO and return
+      return CategoryMapper.toDTO(updatedCategory);
     } catch (error) {
       if (error instanceof Error) {
         throw new CategoryValidationError(error.message);

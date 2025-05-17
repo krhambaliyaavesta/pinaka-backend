@@ -27,15 +27,18 @@ export class KudosCardMapper {
     creatorName: string,
     senderName?: string
   ): KudosCardDTO {
+    // Convert entity to plain object to avoid 'props' property in response
+    const cardData = kudosCard.toObject();
+    
     return {
-      id: kudosCard.id,
-      recipientName: kudosCard.recipientName,
-      teamId: kudosCard.teamId,
+      id: cardData.id,
+      recipientName: cardData.recipientName,
+      teamId: cardData.teamId,
       teamName: teamName,
-      categoryId: kudosCard.categoryId,
+      categoryId: cardData.categoryId,
       categoryName: categoryName,
-      message: kudosCard.message,
-      createdBy: kudosCard.createdBy,
+      message: cardData.message,
+      createdBy: cardData.createdBy,
       creatorName: creatorName,
       sentBy: kudosCard.sentBy || kudosCard.createdBy,
       senderName: senderName || creatorName,

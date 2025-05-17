@@ -1,6 +1,7 @@
 import { Team } from "../../../domain/entities/Team";
 import { TeamRepo } from "../../../domain/repositories/TeamRepo";
 import { TeamNotFoundError, TeamValidationError } from "../../../domain/exceptions/TeamExceptions";
+import { TeamDTO, TeamMapper } from "../../mappers/TeamMapper";
 
 interface UpdateTeamInput {
   name?: string;
@@ -16,9 +17,9 @@ export class UpdateTeamUseCase {
    * Execute the use case
    * @param id Team ID to update
    * @param input Team update data
-   * @returns Promise resolving to the updated team
+   * @returns Promise resolving to the updated team DTO
    */
-  async execute(id: number, input: UpdateTeamInput): Promise<Team> {
+  async execute(id: number, input: UpdateTeamInput): Promise<TeamDTO> {
     // Find the team
     const team = await this.teamRepo.findById(id);
     if (!team) {
@@ -32,7 +33,10 @@ export class UpdateTeamUseCase {
       }
 
       // Persist the updated team
-      return await this.teamRepo.update(team);
+      const updatedTeam = await this.teamRepo.update(team);
+      
+      // Transform to DTO and return
+      return TeamMapper.toDTO(updatedTeam);
     } catch (error) {
       if (error instanceof Error) {
         throw new TeamValidationError(error.message);

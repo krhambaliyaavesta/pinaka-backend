@@ -44,15 +44,18 @@ export class CategoryRepoPgImpl implements CategoryRepo {
    * @returns Promise resolving to the created Category
    */
   async create(category: Category): Promise<Category> {
+    // Convert entity to plain object for database operations
+    const categoryData = category.toObject();
+    
     const query = `
       INSERT INTO categories (name, created_at, updated_at)
       VALUES ($1, $2, $3)
       RETURNING *
     `;
     const [rows] = await this.dbService.query(query, [
-      category.name,
-      category.createdAt,
-      category.updatedAt,
+      categoryData.name,
+      categoryData.createdAt,
+      categoryData.updatedAt,
     ]);
     return this.mapToCategory(rows[0]);
   }
@@ -63,6 +66,9 @@ export class CategoryRepoPgImpl implements CategoryRepo {
    * @returns Promise resolving to the updated Category
    */
   async update(category: Category): Promise<Category> {
+    // Convert entity to plain object for database operations
+    const categoryData = category.toObject();
+    
     const query = `
       UPDATE categories
       SET name = $1, updated_at = $2
@@ -70,12 +76,12 @@ export class CategoryRepoPgImpl implements CategoryRepo {
       RETURNING *
     `;
     const [rows] = await this.dbService.query(query, [
-      category.name,
-      category.updatedAt,
-      category.id,
+      categoryData.name,
+      categoryData.updatedAt,
+      categoryData.id,
     ]);
     if (rows.length === 0) {
-      throw new Error(`Category with ID ${category.id} not found`);
+      throw new Error(`Category with ID ${categoryData.id} not found`);
     }
     return this.mapToCategory(rows[0]);
   }
