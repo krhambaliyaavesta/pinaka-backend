@@ -15,7 +15,7 @@ export const authorizeRoles = (allowedRoles: number[]) => {
     // Check if user's role is in the allowed roles
     if (!allowedRoles.includes(req.user.role)) {
       const roleNames = allowedRoles.map(role => 
-        role === 1 ? 'admin' : role === 2 ? 'lead' : `role ${role}`
+        role === 1 ? 'admin' : role === 2 ? 'lead' : role === 3 ? 'user' : `role ${role}`
       ).join(' or ');
       
       return next(

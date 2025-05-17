@@ -13,7 +13,7 @@ import {
 } from '../../../auth/domain/exceptions/AuthExceptions';
 
 export class AdminController {
-  async getPendingUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async   getPendingUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const currentUserRole = req.user?.role;
       
