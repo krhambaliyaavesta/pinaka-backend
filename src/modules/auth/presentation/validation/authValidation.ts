@@ -16,6 +16,9 @@ const signUpSchema = Joi.object({
   }),
   lastName: Joi.string().required().messages({
     'any.required': 'Last name is required'
+  }),
+  jobTitle: Joi.string().required().messages({
+    'any.required': 'Job title is required'
   })
 });
 

@@ -54,13 +54,50 @@ async function initDatabase() {
           first_name VARCHAR(100) NOT NULL,
           last_name VARCHAR(100) NOT NULL,
           role INTEGER NOT NULL DEFAULT 3,
+          job_title VARCHAR(255) NOT NULL,
+          approval_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
           created_at TIMESTAMP NOT NULL,
           updated_at TIMESTAMP NOT NULL
         )
       `);
       
+      // Create ENUM type for approval status if it doesn't exist
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'approval_status_enum') THEN
+            CREATE TYPE approval_status_enum AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+          END IF;
+        END
+        $$;
+      `);
+      
       console.log('Tables created successfully');
     } else {
+      // Check if job_title column exists
+      const checkJobTitleQuery = `
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'job_title'
+      `;
+      const jobTitleResult = await pool.query(checkJobTitleQuery);
+      
+      if (jobTitleResult.rows.length === 0) {
+        console.log('Adding job_title column to users table...');
+        await pool.query(`ALTER TABLE users ADD COLUMN job_title VARCHAR(255) NOT NULL DEFAULT 'Not Specified'`);
+      }
+      
+      // Check if approval_status column exists
+      const checkApprovalStatusQuery = `
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = 'users' AND column_name = 'approval_status'
+      `;
+      const approvalStatusResult = await pool.query(checkApprovalStatusQuery);
+      
+      if (approvalStatusResult.rows.length === 0) {
+        console.log('Adding approval_status column to users table...');
+        await pool.query(`ALTER TABLE users ADD COLUMN approval_status VARCHAR(20) NOT NULL DEFAULT 'PENDING'`);
+      }
+
       // Check the role column type
       const checkRoleColumnQuery = `
         SELECT data_type FROM information_schema.columns 

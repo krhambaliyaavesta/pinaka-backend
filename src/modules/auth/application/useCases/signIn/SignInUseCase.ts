@@ -36,7 +36,9 @@ export class SignInUseCase {
         email: user.email.toString(),
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role
+        role: user.role,
+        jobTitle: user.jobTitle,
+        approvalStatus: user.approvalStatus
       }
     };
   }

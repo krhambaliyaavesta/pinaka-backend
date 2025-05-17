@@ -1,4 +1,4 @@
-import { UserData } from './UserTypes';
+import { UserData, ApprovalStatus } from './UserTypes';
 import { Email } from '../valueObjects/Email';
 import { Password } from '../valueObjects/Password';
 
@@ -9,6 +9,8 @@ export interface UserProps {
   firstName: string;
   lastName: string;
   role?: number;
+  jobTitle: string;
+  approvalStatus?: ApprovalStatus;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -20,6 +22,8 @@ export class User {
   public readonly firstName: string;
   public readonly lastName: string;
   public readonly role: number;
+  public readonly jobTitle: string;
+  public readonly approvalStatus: ApprovalStatus;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
@@ -30,6 +34,8 @@ export class User {
     firstName: string;
     lastName: string;
     role: number;
+    jobTitle: string;
+    approvalStatus: ApprovalStatus;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -39,6 +45,8 @@ export class User {
     this.firstName = props.firstName;
     this.lastName = props.lastName;
     this.role = props.role;
+    this.jobTitle = props.jobTitle;
+    this.approvalStatus = props.approvalStatus;
     this.createdAt = props.createdAt;
     this.updatedAt = props.updatedAt;
   }
@@ -61,6 +69,9 @@ export class User {
     if (!props.lastName) {
       throw new Error('Last name is required');
     }
+    if (!props.jobTitle) {
+      throw new Error('Job title is required');
+    }
 
     // Convert string properties to value objects
     const email = props.email instanceof Email 
@@ -78,6 +89,8 @@ export class User {
       firstName: props.firstName,
       lastName: props.lastName,
       role: props.role || 3,
+      jobTitle: props.jobTitle,
+      approvalStatus: props.approvalStatus || ApprovalStatus.PENDING,
       createdAt: props.createdAt || new Date(),
       updatedAt: props.updatedAt || new Date()
     });
@@ -92,6 +105,8 @@ export class User {
       firstName: data.first_name,
       lastName: data.last_name,
       role: data.role,
+      jobTitle: data.job_title,
+      approvalStatus: data.approval_status || ApprovalStatus.PENDING,
       createdAt: data.created_at instanceof Date ? data.created_at : new Date(data.created_at),
       updatedAt: data.updated_at instanceof Date ? data.updated_at : new Date(data.updated_at)
     });
@@ -111,6 +126,8 @@ export class User {
       lastName: this.lastName,
       fullName: this.fullName,
       role: this.role,
+      jobTitle: this.jobTitle,
+      approvalStatus: this.approvalStatus,
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString()
     };

@@ -3,4 +3,5 @@ export interface SignUpRequestDto {
   password: string;
   firstName: string;
   lastName: string;
+  jobTitle: string;
 } 

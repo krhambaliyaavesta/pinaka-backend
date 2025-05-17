@@ -21,6 +21,8 @@ export class GetUserInfoUseCase {
       lastName: user.lastName,
       fullName: user.fullName,
       role: user.role,
+      jobTitle: user.jobTitle,
+      approvalStatus: user.approvalStatus,
       createdAt: user.createdAt.toISOString()
     };
   }
