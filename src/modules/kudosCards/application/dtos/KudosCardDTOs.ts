@@ -11,6 +11,8 @@ export interface KudosCardDTO {
   message: string;
   createdBy: string;
   creatorName: string;
+  sentBy: string;
+  senderName: string;
   createdAt: string;
   updatedAt: string;
 }

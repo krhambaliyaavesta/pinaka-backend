@@ -50,10 +50,18 @@ export class GetKudosCardsUseCase {
       }
     }
 
+    // Collect all user IDs (both creators and senders)
+    const allUserIds = new Set<string>();
+    kudosCards.forEach((card) => {
+      allUserIds.add(card.createdBy);
+      if (card.sentBy) {
+        allUserIds.add(card.sentBy);
+      }
+    });
+
     // Create a map of user IDs to user names for efficiency
-    const userIds = [...new Set(kudosCards.map((card) => card.createdBy))];
     const userMap = new Map<string, string>();
-    for (const userId of userIds) {
+    for (const userId of allUserIds) {
       const user = await this.userRepo.findById(userId);
       if (user) {
         userMap.set(userId, `${user.firstName} ${user.lastName}`);
@@ -61,13 +69,15 @@ export class GetKudosCardsUseCase {
     }
 
     // Convert domain entities to DTOs with enriched data
-    return kudosCards.map((kudosCard) =>
-      KudosCardMapper.toDTO(
+    return kudosCards.map((kudosCard) => {
+      const sentBy = kudosCard.sentBy || kudosCard.createdBy;
+      return KudosCardMapper.toDTO(
         kudosCard,
         teamMap.get(kudosCard.teamId) || "Unknown Team",
         categoryMap.get(kudosCard.categoryId) || "Unknown Category",
-        userMap.get(kudosCard.createdBy) || "Unknown User"
-      )
-    );
+        userMap.get(kudosCard.createdBy) || "Unknown User",
+        userMap.get(sentBy) || "Unknown User"
+      );
+    });
   }
 }

@@ -52,12 +52,22 @@ export class GetKudosCardByIdUseCase {
       ? `${creator.firstName} ${creator.lastName}`
       : "Unknown User";
 
+    // Get sender details (if different from creator)
+    let senderName = creatorName;
+    if (kudosCard.sentBy && kudosCard.sentBy !== kudosCard.createdBy) {
+      const sender = await this.userRepo.findById(kudosCard.sentBy);
+      if (sender) {
+        senderName = `${sender.firstName} ${sender.lastName}`;
+      }
+    }
+
     // Return the DTO using the shared mapper
     return KudosCardMapper.toDTO(
       kudosCard,
       team.name,
       category.name,
-      creatorName
+      creatorName,
+      senderName
     );
   }
-} 
+}

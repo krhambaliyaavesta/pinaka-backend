@@ -69,9 +69,7 @@ export class UpdateKudosCardUseCase {
 
       // Verify team exists if it's being updated
       if (updateKudosCardDTO.teamId !== undefined) {
-        const team = await this.teamRepo.findById(
-          updateKudosCardDTO.teamId
-        );
+        const team = await this.teamRepo.findById(updateKudosCardDTO.teamId);
         if (!team) {
           throw new TeamNotFoundError(updateKudosCardDTO.teamId);
         }
@@ -91,10 +89,7 @@ export class UpdateKudosCardUseCase {
       const updateProps = KudosCardMapper.toUpdateDomain(updateKudosCardDTO);
 
       // Update the kudos card
-      const updatedKudosCard = await this.kudosCardRepo.update(
-        id,
-        updateProps
-      );
+      const updatedKudosCard = await this.kudosCardRepo.update(id, updateProps);
 
       if (!updatedKudosCard) {
         throw new KudosCardNotFoundError(id);
@@ -114,12 +109,28 @@ export class UpdateKudosCardUseCase {
         throw new CategoryNotFoundError(categoryId);
       }
 
+      // Get creator name
+      const creatorName = `${user.firstName} ${user.lastName}`;
+
+      // Get sender name (if different from creator)
+      let senderName = creatorName;
+      if (
+        updatedKudosCard.sentBy &&
+        updatedKudosCard.sentBy !== updatedKudosCard.createdBy
+      ) {
+        const sender = await this.userRepo.findById(updatedKudosCard.sentBy);
+        if (sender) {
+          senderName = `${sender.firstName} ${sender.lastName}`;
+        }
+      }
+
       // Return enriched DTO with team and category names
       return KudosCardMapper.toDTO(
         updatedKudosCard,
         team.name,
         category.name,
-        `${user.firstName} ${user.lastName}`
+        creatorName,
+        senderName
       );
     } catch (error) {
       if (

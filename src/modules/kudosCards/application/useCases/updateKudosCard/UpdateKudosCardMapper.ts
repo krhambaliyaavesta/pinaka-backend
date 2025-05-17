@@ -10,7 +10,8 @@ export class UpdateKudosCardMapper {
     kudosCard: KudosCard,
     teamName: string,
     categoryName: string,
-    creatorName: string
+    creatorName: string,
+    senderName: string
   ): UpdateKudosCardResponseDto {
     return {
       id: kudosCard.id,
@@ -22,6 +23,8 @@ export class UpdateKudosCardMapper {
       message: kudosCard.message,
       createdBy: kudosCard.createdBy,
       creatorName,
+      sentBy: kudosCard.sentBy || kudosCard.createdBy,
+      senderName,
       createdAt: kudosCard.createdAt.toISOString(),
       updatedAt: kudosCard.updatedAt.toISOString(),
     };
@@ -53,4 +56,4 @@ export class UpdateKudosCardMapper {
 
     return updateProps;
   }
-} 
+}

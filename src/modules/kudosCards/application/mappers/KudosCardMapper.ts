@@ -17,13 +17,15 @@ export class KudosCardMapper {
    * @param teamName The name of the team for the kudos card
    * @param categoryName The name of the category for the kudos card
    * @param creatorName The name of the creator of the kudos card
+   * @param senderName The name of the sender (if different from creator)
    * @returns A KudosCardDTO representing the KudosCard
    */
   public static toDTO(
     kudosCard: KudosCard,
     teamName: string,
     categoryName: string,
-    creatorName: string
+    creatorName: string,
+    senderName?: string
   ): KudosCardDTO {
     return {
       id: kudosCard.id,
@@ -35,6 +37,8 @@ export class KudosCardMapper {
       message: kudosCard.message,
       createdBy: kudosCard.createdBy,
       creatorName: creatorName,
+      sentBy: kudosCard.sentBy || kudosCard.createdBy,
+      senderName: senderName || creatorName,
       createdAt: kudosCard.createdAt.toISOString(),
       updatedAt: kudosCard.updatedAt.toISOString(),
     };
