@@ -23,7 +23,7 @@ router.get(
 router.put(
   '/users/:userId', 
   authMiddleware, 
-  authorizeRoles([ADMIN_ROLE]), 
+  authorizeRoles([ADMIN_ROLE, LEAD_ROLE]), 
   validateUpdateUser, 
   adminController.updateUser
 );
