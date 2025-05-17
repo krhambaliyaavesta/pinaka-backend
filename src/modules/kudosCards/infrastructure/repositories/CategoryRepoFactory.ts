@@ -1,18 +1,17 @@
-import { CategoryRepository } from "../../domain/repositories/CategoryRepository";
+import { PostgresService } from "../../../../shared/services/PostgresService";
+import { CategoryRepo } from "../../domain/repositories/CategoryRepo";
 import { CategoryRepoPgImpl } from "./CategoryRepoPgImpl";
-import { DatabaseServiceFactory } from "../../../../shared/services/DatabaseServiceFactory";
 
 /**
- * Factory for creating CategoryRepository instances.
- * Currently configured to use PostgreSQL implementation.
+ * Factory for creating CategoryRepo implementations
  */
 export class CategoryRepoFactory {
   /**
-   * Creates and returns a new CategoryRepository implementation
-   * based on PostgreSQL database.
+   * Create a PostgreSQL implementation of CategoryRepo
+   * @param dbService The database service to use
+   * @returns CategoryRepo implementation
    */
-  public static createCategoryRepo(): CategoryRepository {
-    const dbService = DatabaseServiceFactory.getDatabase();
+  static getRepo(dbService: PostgresService): CategoryRepo {
     return new CategoryRepoPgImpl(dbService);
   }
 }

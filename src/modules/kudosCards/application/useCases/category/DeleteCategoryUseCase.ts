@@ -1,11 +1,11 @@
-import { CategoryRepository } from "../../../domain/repositories/CategoryRepository";
+import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
 import { CategoryNotFoundError } from "../../../domain/exceptions/KudosCardExceptions";
 
 /**
  * Use case for deleting a category
  */
 export class DeleteCategoryUseCase {
-  constructor(private categoryRepository: CategoryRepository) {}
+  constructor(private categoryRepo: CategoryRepo) {}
 
   /**
    * Execute the use case
@@ -15,13 +15,13 @@ export class DeleteCategoryUseCase {
    */
   async execute(id: number): Promise<boolean> {
     // First check if category exists
-    const existingCategory = await this.categoryRepository.findById(id);
+    const existingCategory = await this.categoryRepo.findById(id);
     if (!existingCategory) {
       throw new CategoryNotFoundError(id);
     }
 
     // Delete the category
-    const result = await this.categoryRepository.delete(id);
+    const result = await this.categoryRepo.delete(id);
 
     if (!result) {
       throw new Error(`Failed to delete category with ID ${id}`);

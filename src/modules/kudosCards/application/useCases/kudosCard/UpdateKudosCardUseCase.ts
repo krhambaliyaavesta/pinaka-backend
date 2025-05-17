@@ -1,6 +1,6 @@
-import { KudosCardRepository } from "../../../domain/repositories/KudosCardRepository";
-import { TeamRepository } from "../../../domain/repositories/TeamRepository";
-import { CategoryRepository } from "../../../domain/repositories/CategoryRepository";
+import { KudosCardRepo } from "../../../domain/repositories/KudosCardRepo";
+import { TeamRepo } from "../../../domain/repositories/TeamRepo";
+import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
 import { KudosCardMapper } from "../../mappers/KudosCardMapper";
 import { UpdateKudosCardDTO, KudosCardDTO } from "../../dtos/KudosCardDTOs";
 import {
@@ -18,10 +18,10 @@ import { UserRepo } from "../../../../auth/domain/repositories/UserRepo";
  */
 export class UpdateKudosCardUseCase {
   constructor(
-    private kudosCardRepository: KudosCardRepository,
-    private teamRepository: TeamRepository,
-    private categoryRepository: CategoryRepository,
-    private userRepository: UserRepo
+    private kudosCardRepo: KudosCardRepo,
+    private teamRepo: TeamRepo,
+    private categoryRepo: CategoryRepo,
+    private userRepo: UserRepo
   ) {}
 
   /**
@@ -44,13 +44,13 @@ export class UpdateKudosCardUseCase {
   ): Promise<KudosCardDTO> {
     try {
       // Check if user has permission to update kudos cards (role = lead or admin)
-      const user = await this.userRepository.findById(userId);
+      const user = await this.userRepo.findById(userId);
       if (!user) {
         throw new Error("User not found");
       }
 
       // Get the kudos card
-      const kudosCard = await this.kudosCardRepository.findById(id);
+      const kudosCard = await this.kudosCardRepo.findById(id);
       if (!kudosCard) {
         throw new KudosCardNotFoundError(id);
       }
@@ -69,7 +69,7 @@ export class UpdateKudosCardUseCase {
 
       // Verify team exists if it's being updated
       if (updateKudosCardDTO.teamId !== undefined) {
-        const team = await this.teamRepository.findById(
+        const team = await this.teamRepo.findById(
           updateKudosCardDTO.teamId
         );
         if (!team) {
@@ -79,7 +79,7 @@ export class UpdateKudosCardUseCase {
 
       // Verify category exists if it's being updated
       if (updateKudosCardDTO.categoryId !== undefined) {
-        const category = await this.categoryRepository.findById(
+        const category = await this.categoryRepo.findById(
           updateKudosCardDTO.categoryId
         );
         if (!category) {
@@ -91,7 +91,7 @@ export class UpdateKudosCardUseCase {
       const updateProps = KudosCardMapper.toUpdateDomain(updateKudosCardDTO);
 
       // Update the kudos card
-      const updatedKudosCard = await this.kudosCardRepository.update(
+      const updatedKudosCard = await this.kudosCardRepo.update(
         id,
         updateProps
       );
@@ -102,14 +102,14 @@ export class UpdateKudosCardUseCase {
 
       // Get the team name
       const teamId = updatedKudosCard.teamId;
-      const team = await this.teamRepository.findById(teamId);
+      const team = await this.teamRepo.findById(teamId);
       if (!team) {
         throw new TeamNotFoundError(teamId);
       }
 
       // Get the category name
       const categoryId = updatedKudosCard.categoryId;
-      const category = await this.categoryRepository.findById(categoryId);
+      const category = await this.categoryRepo.findById(categoryId);
       if (!category) {
         throw new CategoryNotFoundError(categoryId);
       }

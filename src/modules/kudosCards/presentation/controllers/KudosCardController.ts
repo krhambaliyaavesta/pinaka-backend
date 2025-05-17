@@ -10,6 +10,14 @@ import {
   UnauthorizedKudosCardAccessError,
 } from "../../domain/exceptions/KudosCardExceptions";
 import { RequestWithUser } from "../../../../shared/types/express";
+import { PostgresService } from "../../../../shared/services/PostgresService";
+import { KudosCardRepoFactory } from "../../infrastructure/repositories/KudosCardRepoFactory";
+import { TeamRepoFactory } from "../../infrastructure/repositories/TeamRepoFactory";
+import { CategoryRepoFactory } from "../../infrastructure/repositories/CategoryRepoFactory";
+import { UserRepoFactory } from "../../../auth/infrastructure/repositories/UserRepoFactory";
+import { CreateKudosCardFactory } from "../../application/useCases/createKudosCard/CreateKudosCardFactory";
+import { GetKudosCardByIdFactory } from "../../application/useCases/getKudosCardById/GetKudosCardByIdFactory";
+import { DatabaseServiceFactory } from "../../../../shared/services/DatabaseServiceFactory";
 
 /**
  * Controller for handling kudos card-related API requests
@@ -40,23 +48,37 @@ export class KudosCardController {
   /**
    * Get a kudos card by ID
    */
-  async getKudosCardById(
-    req: RequestWithUser,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> {
+  async getById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      const useCase = KudosCardUseCaseFactory.createGetKudosCardByIdUseCase();
-      const kudosCard = await useCase.execute(id);
-
+      
+      // Get database service
+      const dbService = DatabaseServiceFactory.getDatabase();
+      
+      // Get repositories
+      const kudosCardRepo = KudosCardRepoFactory.getRepo(dbService);
+      const teamRepo = TeamRepoFactory.getRepo(dbService);
+      const categoryRepo = CategoryRepoFactory.getRepo(dbService);
+      const userRepo = UserRepoFactory.createUserRepo();
+      
+      // Create use case
+      const getKudosCardByIdUseCase = GetKudosCardByIdFactory.create(
+        kudosCardRepo,
+        teamRepo,
+        categoryRepo,
+        userRepo
+      );
+      
+      // Execute use case
+      const result = await getKudosCardByIdUseCase.execute({ id });
+      
       res.status(200).json({
         status: "success",
-        data: kudosCard,
+        data: result,
       });
     } catch (error) {
       if (error instanceof KudosCardNotFoundError) {
-        next(new AppError(error.message, 404));
+        next(new AppError(`Kudos card not found: ${error.message}`, 404));
       } else {
         next(error);
       }
@@ -72,29 +94,44 @@ export class KudosCardController {
     next: NextFunction
   ): Promise<void> {
     try {
-      if (!req.user) {
-        return next(
-          new AppError("You must be logged in to create a kudos card", 401)
-        );
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw new AppError("Authentication required", 401);
       }
 
-      const useCase = KudosCardUseCaseFactory.createCreateKudosCardUseCase();
-      const kudosCard = await useCase.execute(req.body, req.user.userId);
-
+      // Get database service
+      const dbService = DatabaseServiceFactory.getDatabase();
+      
+      // Get repositories
+      const kudosCardRepo = KudosCardRepoFactory.getRepo(dbService);
+      const teamRepo = TeamRepoFactory.getRepo(dbService);
+      const categoryRepo = CategoryRepoFactory.getRepo(dbService);
+      const userRepo = UserRepoFactory.createUserRepo();
+      
+      // Create use case
+      const createKudosCardUseCase = CreateKudosCardFactory.create(
+        kudosCardRepo,
+        teamRepo,
+        categoryRepo,
+        userRepo
+      );
+      
+      // Execute use case
+      const result = await createKudosCardUseCase.execute(req.body, userId);
+      
       res.status(201).json({
         status: "success",
-        data: kudosCard,
+        data: result,
       });
     } catch (error) {
-      if (
-        error instanceof TeamNotFoundError ||
-        error instanceof CategoryNotFoundError
-      ) {
-        next(new AppError(error.message, 404));
+      if (error instanceof TeamNotFoundError) {
+        next(new AppError(`Team not found: ${error.message}`, 404));
+      } else if (error instanceof CategoryNotFoundError) {
+        next(new AppError(`Category not found: ${error.message}`, 404));
       } else if (error instanceof InsufficientPermissionsError) {
-        next(new AppError(error.message, 403));
+        next(new AppError(`Insufficient permissions: ${error.message}`, 403));
       } else if (error instanceof KudosCardValidationError) {
-        next(new AppError(error.message, 400));
+        next(new AppError(`Validation error: ${error.message}`, 400));
       } else {
         next(error);
       }

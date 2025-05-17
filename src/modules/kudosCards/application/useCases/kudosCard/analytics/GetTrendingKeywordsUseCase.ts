@@ -1,4 +1,4 @@
-import { KudosCardRepository } from "../../../../domain/repositories/KudosCardRepository";
+import { KudosCardRepo } from "../../../../domain/repositories/KudosCardRepo";
 
 /**
  * Response type for the trending keywords analytics
@@ -12,7 +12,7 @@ export interface TrendingKeywordDTO {
  * Use case for retrieving analytics about trending keywords in kudos card messages
  */
 export class GetTrendingKeywordsUseCase {
-  constructor(private kudosCardRepository: KudosCardRepository) {}
+  constructor(private kudosCardRepo: KudosCardRepo) {}
 
   /**
    * Execute the use case
@@ -27,7 +27,7 @@ export class GetTrendingKeywordsUseCase {
     }
 
     // Get analytics data from repository
-    const trendingKeywords = await this.kudosCardRepository.getTrendingKeywords(
+    const trendingKeywords = await this.kudosCardRepo.getTrendingKeywords(
       limit,
       period
     );

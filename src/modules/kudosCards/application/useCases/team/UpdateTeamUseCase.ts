@@ -1,16 +1,17 @@
-import { TeamRepository } from "../../../domain/repositories/TeamRepository";
+import { TeamRepo } from "../../../domain/repositories/TeamRepo";
 import { TeamMapper } from "../../mappers/TeamMapper";
 import { UpdateTeamDTO, TeamDTO } from "../../dtos/TeamDTOs";
 import {
   TeamNotFoundError,
   KudosCardValidationError,
 } from "../../../domain/exceptions/KudosCardExceptions";
+import { Team } from "../../../domain/entities/Team";
 
 /**
  * Use case for updating an existing team
  */
 export class UpdateTeamUseCase {
-  constructor(private teamRepository: TeamRepository) {}
+  constructor(private teamRepo: TeamRepo) {}
 
   /**
    * Execute the use case
@@ -22,16 +23,18 @@ export class UpdateTeamUseCase {
   async execute(id: number, updateTeamDTO: UpdateTeamDTO): Promise<TeamDTO> {
     try {
       // First check if team exists
-      const existingTeam = await this.teamRepository.findById(id);
+      const existingTeam = await this.teamRepo.findById(id);
       if (!existingTeam) {
         throw new TeamNotFoundError(id);
       }
 
-      // Convert DTO to domain entity props
-      const updateProps = TeamMapper.toUpdateDomain(updateTeamDTO);
+      // Update the team entity
+      if (updateTeamDTO.name) {
+        existingTeam.updateName(updateTeamDTO.name);
+      }
 
       // Update the team
-      const updatedTeam = await this.teamRepository.update(id, updateProps);
+      const updatedTeam = await this.teamRepo.update(existingTeam);
 
       if (!updatedTeam) {
         throw new TeamNotFoundError(id);

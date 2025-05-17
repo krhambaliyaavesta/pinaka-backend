@@ -1,16 +1,17 @@
-import { CategoryRepository } from "../../../domain/repositories/CategoryRepository";
+import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
 import { CategoryMapper } from "../../mappers/CategoryMapper";
 import { UpdateCategoryDTO, CategoryDTO } from "../../dtos/CategoryDTOs";
 import {
   CategoryNotFoundError,
   KudosCardValidationError,
 } from "../../../domain/exceptions/KudosCardExceptions";
+import { Category } from "../../../domain/entities/Category";
 
 /**
  * Use case for updating an existing category
  */
 export class UpdateCategoryUseCase {
-  constructor(private categoryRepository: CategoryRepository) {}
+  constructor(private categoryRepo: CategoryRepo) {}
 
   /**
    * Execute the use case
@@ -25,23 +26,18 @@ export class UpdateCategoryUseCase {
   ): Promise<CategoryDTO> {
     try {
       // First check if category exists
-      const existingCategory = await this.categoryRepository.findById(id);
+      const existingCategory = await this.categoryRepo.findById(id);
       if (!existingCategory) {
         throw new CategoryNotFoundError(id);
       }
 
-      // Convert DTO to domain entity props
-      const updateProps = CategoryMapper.toUpdateDomain(updateCategoryDTO);
+      // Update the category entity
+      if (updateCategoryDTO.name) {
+        existingCategory.updateName(updateCategoryDTO.name);
+      }
 
       // Update the category
-      const updatedCategory = await this.categoryRepository.update(
-        id,
-        updateProps
-      );
-
-      if (!updatedCategory) {
-        throw new CategoryNotFoundError(id);
-      }
+      const updatedCategory = await this.categoryRepo.update(existingCategory);
 
       // Return DTO
       return CategoryMapper.toDTO(updatedCategory);

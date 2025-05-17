@@ -1,4 +1,4 @@
-import { TeamRepository } from "../../../domain/repositories/TeamRepository";
+import { TeamRepo } from "../../../domain/repositories/TeamRepo";
 import { TeamMapper } from "../../mappers/TeamMapper";
 import { CreateTeamDTO, TeamDTO } from "../../dtos/TeamDTOs";
 import { Team } from "../../../domain/entities/Team";
@@ -8,7 +8,7 @@ import { KudosCardValidationError } from "../../../domain/exceptions/KudosCardEx
  * Use case for creating a new team
  */
 export class CreateTeamUseCase {
-  constructor(private teamRepository: TeamRepository) {}
+  constructor(private teamRepo: TeamRepo) {}
 
   /**
    * Execute the use case
@@ -24,7 +24,7 @@ export class CreateTeamUseCase {
       const team = Team.create(teamProps);
 
       // Save to repository
-      const savedTeam = await this.teamRepository.create(team);
+      const savedTeam = await this.teamRepo.create(team);
 
       // Return DTO
       return TeamMapper.toDTO(savedTeam);

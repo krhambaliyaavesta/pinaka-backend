@@ -1,46 +1,51 @@
-import { TeamRepository } from "../../modules/kudosCards/domain/repositories/TeamRepository";
-import { CategoryRepository } from "../../modules/kudosCards/domain/repositories/CategoryRepository";
-import { KudosCardRepository } from "../../modules/kudosCards/domain/repositories/KudosCardRepository";
+import { TeamRepo } from "../../modules/kudosCards/domain/repositories/TeamRepo";
+import { CategoryRepo } from "../../modules/kudosCards/domain/repositories/CategoryRepo";
+import { KudosCardRepo } from "../../modules/kudosCards/domain/repositories/KudosCardRepo";
 import { TeamRepoFactory } from "../../modules/kudosCards/infrastructure/repositories/TeamRepoFactory";
 import { CategoryRepoFactory } from "../../modules/kudosCards/infrastructure/repositories/CategoryRepoFactory";
 import { KudosCardRepoFactory } from "../../modules/kudosCards/infrastructure/repositories/KudosCardRepoFactory";
+import { PostgresService } from "../services/PostgresService";
+import { DatabaseServiceFactory } from "../services/DatabaseServiceFactory";
 
 /**
  * Factory that provides access to all repositories in the Kudos Cards module.
  */
 export class KudosCardsModuleFactory {
-  private static teamRepo: TeamRepository | null = null;
-  private static categoryRepo: CategoryRepository | null = null;
-  private static kudosCardRepo: KudosCardRepository | null = null;
+  private static teamRepo: TeamRepo | null = null;
+  private static categoryRepo: CategoryRepo | null = null;
+  private static kudosCardRepo: KudosCardRepo | null = null;
 
   /**
-   * Gets a singleton instance of the TeamRepository
+   * Gets a singleton instance of the TeamRepo
    */
-  static getTeamRepo(): TeamRepository {
+  static getTeamRepo(): TeamRepo {
     if (!this.teamRepo) {
-      this.teamRepo = TeamRepoFactory.createTeamRepo();
+      const dbService = DatabaseServiceFactory.getDatabase();
+      this.teamRepo = TeamRepoFactory.getRepo(dbService);
     }
-    return this.teamRepo;
+    return this.teamRepo as TeamRepo;
   }
 
   /**
-   * Gets a singleton instance of the CategoryRepository
+   * Gets a singleton instance of the CategoryRepo
    */
-  static getCategoryRepo(): CategoryRepository {
+  static getCategoryRepo(): CategoryRepo {
     if (!this.categoryRepo) {
-      this.categoryRepo = CategoryRepoFactory.createCategoryRepo();
+      const dbService = DatabaseServiceFactory.getDatabase();
+      this.categoryRepo = CategoryRepoFactory.getRepo(dbService);
     }
-    return this.categoryRepo;
+    return this.categoryRepo as CategoryRepo;
   }
 
   /**
-   * Gets a singleton instance of the KudosCardRepository
+   * Gets a singleton instance of the KudosCardRepo
    */
-  static getKudosCardRepo(): KudosCardRepository {
+  static getKudosCardRepo(): KudosCardRepo {
     if (!this.kudosCardRepo) {
-      this.kudosCardRepo = KudosCardRepoFactory.createKudosCardRepo();
+      const dbService = DatabaseServiceFactory.getDatabase();
+      this.kudosCardRepo = KudosCardRepoFactory.getRepo(dbService);
     }
-    return this.kudosCardRepo;
+    return this.kudosCardRepo as KudosCardRepo;
   }
 
   /**

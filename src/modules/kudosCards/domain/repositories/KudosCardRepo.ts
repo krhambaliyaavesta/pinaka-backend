@@ -14,10 +14,10 @@ export interface KudosCardFilters {
 }
 
 /**
- * Repository interface for KudosCard entity operations.
+ * Repo interface for KudosCard entity operations.
  * This defines the contract for data access operations related to kudos cards.
  */
-export interface KudosCardRepository {
+export interface KudosCardRepo {
   /**
    * Find all kudos cards based on optional filters
    * @param filters Optional filtering criteria

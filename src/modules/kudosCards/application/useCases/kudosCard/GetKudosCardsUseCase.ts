@@ -1,6 +1,6 @@
-import { KudosCardRepository } from "../../../domain/repositories/KudosCardRepository";
-import { TeamRepository } from "../../../domain/repositories/TeamRepository";
-import { CategoryRepository } from "../../../domain/repositories/CategoryRepository";
+import { KudosCardRepo } from "../../../domain/repositories/KudosCardRepo";
+import { TeamRepo } from "../../../domain/repositories/TeamRepo";
+import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
 import { KudosCardMapper } from "../../mappers/KudosCardMapper";
 import { KudosCardDTO, KudosCardFilterDTO } from "../../dtos/KudosCardDTOs";
 import { UserRepo } from "../../../../auth/domain/repositories/UserRepo";
@@ -10,10 +10,10 @@ import { UserRepo } from "../../../../auth/domain/repositories/UserRepo";
  */
 export class GetKudosCardsUseCase {
   constructor(
-    private kudosCardRepository: KudosCardRepository,
-    private teamRepository: TeamRepository,
-    private categoryRepository: CategoryRepository,
-    private userRepository: UserRepo
+    private kudosCardRepo: KudosCardRepo,
+    private teamRepo: TeamRepo,
+    private categoryRepo: CategoryRepo,
+    private userRepo: UserRepo
   ) {}
 
   /**
@@ -28,13 +28,13 @@ export class GetKudosCardsUseCase {
       : undefined;
 
     // Get kudos cards from repository
-    const kudosCards = await this.kudosCardRepository.findAll(filter);
+    const kudosCards = await this.kudosCardRepo.findAll(filter);
 
     // Create a map of team IDs to team names for efficiency
     const teamIds = [...new Set(kudosCards.map((card) => card.teamId))];
     const teamMap = new Map<number, string>();
     for (const teamId of teamIds) {
-      const team = await this.teamRepository.findById(teamId);
+      const team = await this.teamRepo.findById(teamId);
       if (team) {
         teamMap.set(teamId, team.name);
       }
@@ -44,7 +44,7 @@ export class GetKudosCardsUseCase {
     const categoryIds = [...new Set(kudosCards.map((card) => card.categoryId))];
     const categoryMap = new Map<number, string>();
     for (const categoryId of categoryIds) {
-      const category = await this.categoryRepository.findById(categoryId);
+      const category = await this.categoryRepo.findById(categoryId);
       if (category) {
         categoryMap.set(categoryId, category.name);
       }
@@ -54,7 +54,7 @@ export class GetKudosCardsUseCase {
     const userIds = [...new Set(kudosCards.map((card) => card.createdBy))];
     const userMap = new Map<string, string>();
     for (const userId of userIds) {
-      const user = await this.userRepository.findById(userId);
+      const user = await this.userRepo.findById(userId);
       if (user) {
         userMap.set(userId, `${user.firstName} ${user.lastName}`);
       }

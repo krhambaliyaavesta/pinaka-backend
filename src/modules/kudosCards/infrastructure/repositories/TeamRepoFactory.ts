@@ -1,18 +1,12 @@
-import { TeamRepository } from "../../domain/repositories/TeamRepository";
+import { PostgresService } from "../../../../shared/services/PostgresService";
+import { TeamRepo } from "../../domain/repositories/TeamRepo";
 import { TeamRepoPgImpl } from "./TeamRepoPgImpl";
-import { DatabaseServiceFactory } from "../../../../shared/services/DatabaseServiceFactory";
 
 /**
- * Factory for creating TeamRepository instances.
- * Currently configured to use PostgreSQL implementation.
+ * Factory for creating TeamRepo implementations
  */
 export class TeamRepoFactory {
-  /**
-   * Creates and returns a new TeamRepository implementation
-   * based on PostgreSQL database.
-   */
-  public static createTeamRepo(): TeamRepository {
-    const dbService = DatabaseServiceFactory.getDatabase();
+  static getRepo(dbService: PostgresService): TeamRepo {
     return new TeamRepoPgImpl(dbService);
   }
 }

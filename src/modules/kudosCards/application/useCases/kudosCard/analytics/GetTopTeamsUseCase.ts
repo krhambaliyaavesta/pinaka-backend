@@ -1,4 +1,4 @@
-import { KudosCardRepository } from "../../../../domain/repositories/KudosCardRepository";
+import { KudosCardRepo } from "../../../../domain/repositories/KudosCardRepo";
 
 /**
  * Response type for the top teams analytics
@@ -13,7 +13,7 @@ export interface TopTeamDTO {
  * Use case for retrieving analytics about top teams receiving kudos
  */
 export class GetTopTeamsUseCase {
-  constructor(private kudosCardRepository: KudosCardRepository) {}
+  constructor(private kudosCardRepo: KudosCardRepo) {}
 
   /**
    * Execute the use case
@@ -28,7 +28,7 @@ export class GetTopTeamsUseCase {
     }
 
     // Get analytics data from repository
-    const topTeams = await this.kudosCardRepository.getTopTeams(limit, period);
+    const topTeams = await this.kudosCardRepo.getTopTeams(limit, period);
 
     // Return the data as DTOs
     return topTeams.map((team) => ({

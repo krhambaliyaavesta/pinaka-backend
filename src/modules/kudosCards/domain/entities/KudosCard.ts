@@ -3,7 +3,7 @@
  * given by one user to another for a specific achievement or contribution.
  */
 export interface KudosCardProps {
-  id?: string;
+  id: number;
   recipientName: string;
   teamId: number;
   categoryId: number;
@@ -48,7 +48,7 @@ export class KudosCard {
   }
 
   // Getters
-  public get id(): string | undefined {
+  public get id(): number {
     return this.props.id;
   }
 

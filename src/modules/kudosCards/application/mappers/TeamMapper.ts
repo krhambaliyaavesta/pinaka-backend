@@ -35,6 +35,7 @@ export class TeamMapper {
    */
   public static toDomain(createTeamDTO: CreateTeamDTO): TeamProps {
     return {
+      id: createTeamDTO.id, 
       name: createTeamDTO.name,
     };
   }

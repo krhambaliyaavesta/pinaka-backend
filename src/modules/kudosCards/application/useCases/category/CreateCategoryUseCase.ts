@@ -1,4 +1,4 @@
-import { CategoryRepository } from "../../../domain/repositories/CategoryRepository";
+import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
 import { CategoryMapper } from "../../mappers/CategoryMapper";
 import { CreateCategoryDTO, CategoryDTO } from "../../dtos/CategoryDTOs";
 import { Category } from "../../../domain/entities/Category";
@@ -8,7 +8,7 @@ import { KudosCardValidationError } from "../../../domain/exceptions/KudosCardEx
  * Use case for creating a new category
  */
 export class CreateCategoryUseCase {
-  constructor(private categoryRepository: CategoryRepository) {}
+  constructor(private categoryRepo: CategoryRepo) {}
 
   /**
    * Execute the use case
@@ -24,7 +24,7 @@ export class CreateCategoryUseCase {
       const category = Category.create(categoryProps);
 
       // Save to repository
-      const savedCategory = await this.categoryRepository.create(category);
+      const savedCategory = await this.categoryRepo.create(category);
 
       // Return DTO
       return CategoryMapper.toDTO(savedCategory);

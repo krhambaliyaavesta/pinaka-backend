@@ -1,123 +1,111 @@
-import { Team } from "../../domain/entities/Team";
-import { TeamRepository } from "../../domain/repositories/TeamRepository";
 import { PostgresService } from "../../../../shared/services/PostgresService";
-import { TeamNotFoundError } from "../../domain/exceptions/KudosCardExceptions";
+import { TeamRepo } from "../../domain/repositories/TeamRepo";
+import { Team } from "../../domain/entities/Team";
 
 /**
- * PostgreSQL implementation of the TeamRepository interface
+ * PostgreSQL implementation of TeamRepo
  */
-export class TeamRepoPgImpl implements TeamRepository {
-  constructor(private db: PostgresService) {}
+export class TeamRepoPgImpl implements TeamRepo {
+  constructor(private dbService: PostgresService) {}
 
+  /**
+   * Find all teams
+   * @returns Promise resolving to array of Teams
+   */
   async findAll(): Promise<Team[]> {
-    try {
-      const [rows] = await this.db.query(
-        "SELECT * FROM teams ORDER BY name ASC"
-      );
-
-      return rows.map(this.mapToTeam);
-    } catch (error) {
-      console.error("Error in TeamRepoPgImpl.findAll:", error);
-      throw error;
-    }
-  }
-
-  async findById(id: number): Promise<Team | null> {
-    try {
-      const [rows] = await this.db.query("SELECT * FROM teams WHERE id = $1", [
-        id,
-      ]);
-
-      if (rows.length === 0) {
-        return null;
-      }
-
-      return this.mapToTeam(rows[0]);
-    } catch (error) {
-      console.error(`Error in TeamRepoPgImpl.findById(${id}):`, error);
-      throw error;
-    }
-  }
-
-  async create(
-    team: Omit<Team, "id" | "createdAt" | "updatedAt">
-  ): Promise<Team> {
-    try {
-      const now = new Date();
-      const [result] = await this.db.query(
-        "INSERT INTO teams (name, created_at, updated_at) VALUES ($1, $2, $3) RETURNING *",
-        [team.name, now, now]
-      );
-
-      return this.mapToTeam(result[0]);
-    } catch (error) {
-      console.error("Error in TeamRepoPgImpl.create:", error);
-      throw error;
-    }
-  }
-
-  async update(id: number, teamData: Partial<Team>): Promise<Team | null> {
-    try {
-      // First check if team exists
-      const team = await this.findById(id);
-      if (!team) {
-        return null;
-      }
-
-      // Update the team
-      const [result] = await this.db.query(
-        "UPDATE teams SET name = $1, updated_at = $2 WHERE id = $3 RETURNING *",
-        [teamData.name || team.name, new Date(), id]
-      );
-
-      return this.mapToTeam(result[0]);
-    } catch (error) {
-      console.error(`Error in TeamRepoPgImpl.update(${id}):`, error);
-      throw error;
-    }
-  }
-
-  async delete(id: number): Promise<boolean> {
-    try {
-      // Check if team exists
-      const team = await this.findById(id);
-      if (!team) {
-        return false;
-      }
-
-      // Check if this team has any kudos cards
-      const [kudosCards] = await this.db.query(
-        "SELECT COUNT(*) FROM kudos_cards WHERE team_id = $1",
-        [id]
-      );
-
-      if (kudosCards[0].count > 0) {
-        throw new Error(
-          `Cannot delete team with ID ${id} because there are kudos cards associated with it`
-        );
-      }
-
-      const [result] = await this.db.query(
-        "DELETE FROM teams WHERE id = $1 RETURNING id",
-        [id]
-      );
-
-      return result && result.length > 0;
-    } catch (error) {
-      console.error(`Error in TeamRepoPgImpl.delete(${id}):`, error);
-      throw error;
-    }
+    const query = `
+      SELECT * FROM teams
+      ORDER BY name ASC
+    `;
+    const result = await this.dbService.query(query);
+    return result[0].map(this.mapToTeam);
   }
 
   /**
-   * Maps a database row to a Team entity
+   * Find a team by its ID
+   * @param id The team ID
+   * @returns Promise resolving to Team or null if not found
+   */
+  async findById(id: number): Promise<Team | null> {
+    const query = `
+      SELECT * FROM teams
+      WHERE id = $1
+    `;
+    const result = await this.dbService.query(query, [id]);
+    if (result[0].length === 0) {
+      return null;
+    }
+    return this.mapToTeam(result[0][0]);
+  }
+
+  /**
+   * Create a new team
+   * @param team The team entity to create
+   * @returns Promise resolving to the created Team
+   */
+  async create(team: Team): Promise<Team> {
+    const query = `
+      INSERT INTO teams (name, created_at, updated_at)
+      VALUES ($1, $2, $3)
+      RETURNING *
+    `;
+    const result = await this.dbService.query(query, [
+      team.name,
+      team.createdAt,
+      team.updatedAt,
+    ]);
+    return this.mapToTeam(result[0][0]);
+  }
+
+  /**
+   * Update an existing team
+   * @param team The team entity with updated values
+   * @returns Promise resolving to the updated Team
+   */
+  async update(team: Team): Promise<Team> {
+    const query = `
+      UPDATE teams
+      SET name = $1, updated_at = $2
+      WHERE id = $3
+      RETURNING *
+    `;
+    const result = await this.dbService.query(query, [
+      team.name,
+      team.updatedAt,
+      team.id,
+    ]);
+    if (result[0].length === 0) {
+      throw new Error(`Team with ID ${team.id} not found`);
+    }
+    return this.mapToTeam(result[0][0]);
+  }
+
+  /**
+   * Delete a team by ID
+   * @param id The team ID to delete
+   * @returns Promise resolving to true if successful, false otherwise
+   */
+  async delete(id: number): Promise<boolean> {
+    const query = `
+      DELETE FROM teams
+      WHERE id = $1
+      RETURNING id
+    `;
+    const result = await this.dbService.query(query, [id]);
+    return result[0].length > 0;
+  }
+
+  /**
+   * Map database row to Team entity
+   * @param row Database row
+   * @returns Team entity
    */
   private mapToTeam(row: any): Team {
     return Team.create({
       id: row.id,
       name: row.name,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
     });
   }
 }

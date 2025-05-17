@@ -11,7 +11,8 @@ export interface TeamDTO {
 /**
  * DTO for creating a new team
  */
-export interface CreateTeamDTO {
+export interface CreateTeamDTO {  
+  id: number;
   name: string;
 }
 

@@ -18,7 +18,7 @@ router.get(
   validateKudosCardFilters,
   kudosCardController.getKudosCards
 );
-router.get("/:id", authMiddleware, kudosCardController.getKudosCardById);
+router.get("/:id", authMiddleware, kudosCardController.getById);
 
 // Routes only available to Tech Leads and Admins
 router.post(

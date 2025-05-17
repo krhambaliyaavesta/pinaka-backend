@@ -1,4 +1,4 @@
-import { KudosCardRepository } from "../../../domain/repositories/KudosCardRepository";
+import { KudosCardRepo } from "../../../domain/repositories/KudosCardRepo";
 import {
   KudosCardNotFoundError,
   InsufficientPermissionsError,
@@ -11,8 +11,8 @@ import { UserRepo } from "../../../../auth/domain/repositories/UserRepo";
  */
 export class DeleteKudosCardUseCase {
   constructor(
-    private kudosCardRepository: KudosCardRepository,
-    private userRepository: UserRepo
+    private kudosCardRepo: KudosCardRepo,
+    private userRepo: UserRepo
   ) {}
 
   /**
@@ -26,7 +26,7 @@ export class DeleteKudosCardUseCase {
    */
   async execute(id: string, userId: string): Promise<boolean> {
     // Check if user exists and has permission
-    const user = await this.userRepository.findById(userId);
+    const user = await this.userRepo.findById(userId);
     if (!user) {
       throw new Error("User not found");
     }
@@ -38,7 +38,7 @@ export class DeleteKudosCardUseCase {
     }
 
     // Check if kudos card exists
-    const kudosCard = await this.kudosCardRepository.findById(id);
+    const kudosCard = await this.kudosCardRepo.findById(id);
     if (!kudosCard) {
       throw new KudosCardNotFoundError(id);
     }
@@ -50,7 +50,7 @@ export class DeleteKudosCardUseCase {
     }
 
     // Soft delete the kudos card
-    const result = await this.kudosCardRepository.softDelete(id);
+    const result = await this.kudosCardRepo.softDelete(id);
 
     if (!result) {
       throw new Error(`Failed to delete kudos card with ID ${id}`);

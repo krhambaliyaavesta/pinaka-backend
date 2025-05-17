@@ -1,4 +1,4 @@
-import { TeamRepository } from "../../../domain/repositories/TeamRepository";
+import { TeamRepo } from "../../../domain/repositories/TeamRepo";
 import { TeamMapper } from "../../mappers/TeamMapper";
 import { TeamDTO } from "../../dtos/TeamDTOs";
 import { TeamNotFoundError } from "../../../domain/exceptions/KudosCardExceptions";
@@ -7,7 +7,7 @@ import { TeamNotFoundError } from "../../../domain/exceptions/KudosCardException
  * Use case for retrieving a team by ID
  */
 export class GetTeamByIdUseCase {
-  constructor(private teamRepository: TeamRepository) {}
+  constructor(private teamRepo: TeamRepo) {}
 
   /**
    * Execute the use case
@@ -16,7 +16,7 @@ export class GetTeamByIdUseCase {
    * @throws TeamNotFoundError if the team with the given ID doesn't exist
    */
   async execute(id: number): Promise<TeamDTO> {
-    const team = await this.teamRepository.findById(id);
+    const team = await this.teamRepo.findById(id);
 
     if (!team) {
       throw new TeamNotFoundError(id);

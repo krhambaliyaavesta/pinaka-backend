@@ -1,8 +1,9 @@
 import { KudosCardRepo } from "../../../domain/repositories/KudosCardRepo";
 import { TeamRepo } from "../../../domain/repositories/TeamRepo";
 import { CategoryRepo } from "../../../domain/repositories/CategoryRepo";
-import { KudosCardMapper } from "../../mappers/KudosCardMapper";
-import { CreateKudosCardDTO, KudosCardDTO } from "../../dtos/KudosCardDTOs";
+import { CreateKudosCardMapper } from "./CreateKudosCardMapper";
+import { CreateKudosCardRequestDto } from "./CreateKudosCardRequestDto";
+import { CreateKudosCardResponseDto } from "./CreateKudosCardResponseDto";
 import { KudosCard } from "../../../domain/entities/KudosCard";
 import {
   KudosCardValidationError,
@@ -25,18 +26,18 @@ export class CreateKudosCardUseCase {
 
   /**
    * Execute the use case
-   * @param createKudosCardDTO The data for creating a new kudos card
+   * @param requestDto The data for creating a new kudos card
    * @param userId The ID of the user creating the kudos card
-   * @returns Promise resolving to the created KudosCardDTO
+   * @returns Promise resolving to the created kudos card data
    * @throws TeamNotFoundError if the team with the given ID doesn't exist
    * @throws CategoryNotFoundError if the category with the given ID doesn't exist
    * @throws KudosCardValidationError if the input data is invalid
    * @throws InsufficientPermissionsError if the user doesn't have permission to create kudos cards
    */
   async execute(
-    createKudosCardDTO: CreateKudosCardDTO,
+    requestDto: CreateKudosCardRequestDto,
     userId: string
-  ): Promise<KudosCardDTO> {
+  ): Promise<CreateKudosCardResponseDto> {
     try {
       // Check if user has permission to create kudos cards (role = lead or admin)
       const user = await this.userRepo.findById(userId);
@@ -51,25 +52,29 @@ export class CreateKudosCardUseCase {
 
       // Verify team exists
       const team = await this.teamRepo.findById(
-        createKudosCardDTO.teamId
+        requestDto.teamId
       );
       if (!team) {
-        throw new TeamNotFoundError(createKudosCardDTO.teamId);
+        throw new TeamNotFoundError(requestDto.teamId);
       }
 
       // Verify category exists
       const category = await this.categoryRepo.findById(
-        createKudosCardDTO.categoryId
+        requestDto.categoryId
       );
       if (!category) {
-        throw new CategoryNotFoundError(createKudosCardDTO.categoryId);
+        throw new CategoryNotFoundError(requestDto.categoryId);
       }
 
       // Convert DTO to domain entity props
-      const kudosCardProps = KudosCardMapper.toDomain(
-        createKudosCardDTO,
-        userId
-      );
+      const kudosCardProps = {
+        id: 0, // Temporary ID that will be replaced by the database
+        recipientName: requestDto.recipientName,
+        teamId: requestDto.teamId,
+        categoryId: requestDto.categoryId,
+        message: requestDto.message,
+        createdBy: userId
+      };
 
       // Create the domain entity
       const kudosCard = KudosCard.create(kudosCardProps);
@@ -78,7 +83,7 @@ export class CreateKudosCardUseCase {
       const savedKudosCard = await this.kudosCardRepo.create(kudosCard);
 
       // Return enriched DTO with team and category names
-      return KudosCardMapper.toDTO(
+      return CreateKudosCardMapper.toResponseDto(
         savedKudosCard,
         team.name,
         category.name,
@@ -98,4 +103,4 @@ export class CreateKudosCardUseCase {
       throw error;
     }
   }
-}
+} 

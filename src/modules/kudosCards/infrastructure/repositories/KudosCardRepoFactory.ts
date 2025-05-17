@@ -1,18 +1,17 @@
-import { KudosCardRepository } from "../../domain/repositories/KudosCardRepository";
+import { PostgresService } from "../../../../shared/services/PostgresService";
+import { KudosCardRepo } from "../../domain/repositories/KudosCardRepo";
 import { KudosCardRepoPgImpl } from "./KudosCardRepoPgImpl";
-import { DatabaseServiceFactory } from "../../../../shared/services/DatabaseServiceFactory";
 
 /**
- * Factory for creating KudosCardRepository instances.
- * Currently configured to use PostgreSQL implementation.
+ * Factory for creating KudosCardRepo implementations
  */
 export class KudosCardRepoFactory {
   /**
-   * Creates and returns a new KudosCardRepository implementation
-   * based on PostgreSQL database.
+   * Create a PostgreSQL implementation of KudosCardRepo
+   * @param dbService The database service to use
+   * @returns KudosCardRepo implementation
    */
-  public static createKudosCardRepo(): KudosCardRepository {
-    const dbService = DatabaseServiceFactory.getDatabase();
+  static getRepo(dbService: PostgresService): KudosCardRepo {
     return new KudosCardRepoPgImpl(dbService);
   }
 }

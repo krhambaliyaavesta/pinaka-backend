@@ -1,4 +1,4 @@
-import { KudosCardRepository } from "../../../../domain/repositories/KudosCardRepository";
+import { KudosCardRepo } from "../../../../domain/repositories/KudosCardRepo";
 
 /**
  * Response type for the trending categories analytics
@@ -13,7 +13,7 @@ export interface TrendingCategoryDTO {
  * Use case for retrieving analytics about trending kudos card categories
  */
 export class GetTrendingCategoriesUseCase {
-  constructor(private kudosCardRepository: KudosCardRepository) {}
+  constructor(private kudosCardRepo: KudosCardRepo) {}
 
   /**
    * Execute the use case
@@ -32,7 +32,7 @@ export class GetTrendingCategoriesUseCase {
 
     // Get analytics data from repository
     const trendingCategories =
-      await this.kudosCardRepository.getTrendingCategories(limit, period);
+      await this.kudosCardRepo.getTrendingCategories(limit, period);
 
     // Return the data as DTOs
     return trendingCategories.map((category) => ({

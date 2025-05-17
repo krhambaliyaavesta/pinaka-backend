@@ -3,7 +3,7 @@
  * Teams are used to categorize kudos cards by functional area.
  */
 export interface TeamProps {
-  id?: number;
+  id: number;
   name: string;
   createdAt?: Date;
   updatedAt?: Date;

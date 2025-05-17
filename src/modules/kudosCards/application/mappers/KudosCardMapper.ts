@@ -5,7 +5,7 @@ import {
   UpdateKudosCardDTO,
   KudosCardFilterDTO,
 } from "../dtos/KudosCardDTOs";
-import { KudosCardFilters } from "../../domain/repositories/KudosCardRepository";
+import { KudosCardFilters } from "../../domain/repositories/KudosCardRepo";
 
 /**
  * Mapper class for converting between KudosCard domain entities and DTOs
@@ -26,7 +26,7 @@ export class KudosCardMapper {
     creatorName: string
   ): KudosCardDTO {
     return {
-      id: kudosCard.id as string,
+      id: kudosCard.id,
       recipientName: kudosCard.recipientName,
       teamId: kudosCard.teamId,
       teamName: teamName,
@@ -51,6 +51,7 @@ export class KudosCardMapper {
     createdBy: string
   ): KudosCardProps {
     return {
+      id: createKudosCardDTO.id,
       recipientName: createKudosCardDTO.recipientName,
       teamId: createKudosCardDTO.teamId,
       categoryId: createKudosCardDTO.categoryId,

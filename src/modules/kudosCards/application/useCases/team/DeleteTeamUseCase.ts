@@ -1,11 +1,11 @@
-import { TeamRepository } from "../../../domain/repositories/TeamRepository";
+import { TeamRepo } from "../../../domain/repositories/TeamRepo";
 import { TeamNotFoundError } from "../../../domain/exceptions/KudosCardExceptions";
 
 /**
  * Use case for deleting a team
  */
 export class DeleteTeamUseCase {
-  constructor(private teamRepository: TeamRepository) {}
+  constructor(private teamRepo: TeamRepo) {}
 
   /**
    * Execute the use case
@@ -15,13 +15,13 @@ export class DeleteTeamUseCase {
    */
   async execute(id: number): Promise<boolean> {
     // First check if team exists
-    const existingTeam = await this.teamRepository.findById(id);
+    const existingTeam = await this.teamRepo.findById(id);
     if (!existingTeam) {
       throw new TeamNotFoundError(id);
     }
 
     // Delete the team
-    const result = await this.teamRepository.delete(id);
+    const result = await this.teamRepo.delete(id);
 
     if (!result) {
       throw new Error(`Failed to delete team with ID ${id}`);

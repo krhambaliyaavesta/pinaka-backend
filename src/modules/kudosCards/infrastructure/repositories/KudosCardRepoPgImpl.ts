@@ -1,15 +1,15 @@
 import { KudosCard } from "../../domain/entities/KudosCard";
 import {
-  KudosCardRepository,
+  KudosCardRepo,
   KudosCardFilters,
-} from "../../domain/repositories/KudosCardRepository";
+} from "../../domain/repositories/KudosCardRepo";
 import { PostgresService } from "../../../../shared/services/PostgresService";
 import { KudosCardNotFoundError } from "../../domain/exceptions/KudosCardExceptions";
 
 /**
- * PostgreSQL implementation of the KudosCardRepository interface
+ * PostgreSQL implementation of the KudosCardRepo interface
  */
-export class KudosCardRepoPgImpl implements KudosCardRepository {
+export class KudosCardRepoPgImpl implements KudosCardRepo {
   constructor(private db: PostgresService) {}
 
   async findAll(filters?: KudosCardFilters): Promise<KudosCard[]> {
