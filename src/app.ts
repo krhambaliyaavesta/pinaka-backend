@@ -10,9 +10,10 @@ import authRoutes from "./modules/auth/presentation/routes/authRoutes";
 import adminRoutes from "./modules/admin/presentation/routes/adminRoutes";
 import kudosCardRoutes from "./modules/kudosCards/presentation/routes/kudosCardRoutes";
 import teamRoutes from "./modules/teams/presentation/routes/teamRoutes";
-import categoryRoutes from "./modules/categories/presentation/routes/categoryRoutes"; 
+import categoryRoutes from "./modules/categories/presentation/routes/categoryRoutes";
 import analyticsRoutes from "./modules/analytics/presentation/routes/analyticsRoutes";
-
+import reactionRoutes from "./modules/reactions/presentation/routes/reactionRoutes";
+import commentRoutes from "./modules/comments/presentation/routes/commentsRoutes";
 const app: Application = express();
 
 // Initialize database service
@@ -36,6 +37,8 @@ app.use("/api/kudos-cards", kudosCardRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/reactions", reactionRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
