@@ -1,0 +1,276 @@
+---
+description: This gives you information about how to write test for this project
+globs: 
+alwaysApply: false
+---
+# Testing Strategy for Clean Architecture
+
+This guide explains the testing strategy for our Kudos Card System based on clean architecture principles.
+
+## Testing Levels
+
+### Unit Tests (src/tests/unit/)
+
+Unit tests verify individual components in isolation, with dependencies mocked or stubbed.
+
+#### Domain Layer Tests
+- Test entities, value objects, and domain services without external dependencies
+- Focus on business rules, invariants, and core logic
+- Example:
+```javascript
+describe('KudosCard Entity', () => {
+  it('should validate message is not empty', () => {
+    expect(() => new KudosCard({ ...validProps, message: '' }))
+      .toThrow('Message cannot be empty');
+  });
+});
+```
+
+#### Application Layer Tests
+- Test use cases with mocked repositories
+- Verify business logic execution and data flow
+- Test DTOs and mappers for correct data transformation
+- Example:
+```javascript
+describe('CreateKudosCardUseCase', () => {
+  const mockRepository = mock(KudosCardRepository);
+  const useCase = new CreateKudosCardUseCase(instance(mockRepository));
+  
+  it('should create a kudos card with valid data', async () => {
+    // Arrange
+    when(mockRepository.create(anything())).thenResolve(mockKudosCard);
+    
+    // Act
+    const result = await useCase.execute(validCreateKudosCardDTO);
+    
+    // Assert
+    verify(mockRepository.create(anything())).once();
+    expect(result).toEqual(expectedKudosCardDTO);
+  });
+});
+```
+
+#### Infrastructure Layer Tests
+- Test repository implementations with a test database
+- Verify correct SQL queries and data persistence
+- Example:
+```javascript
+describe('PostgresKudosCardRepository', () => {
+  let repository: PostgresKudosCardRepository;
+  let db: DatabaseConnection;
+  
+  beforeAll(async () => {
+    db = await createTestDatabase();
+    repository = new PostgresKudosCardRepository(db);
+  });
+  
+  it('should find kudos cards by recipient name', async () => {
+    // Arrange
+    await seedDatabase(db, testKudosCards);
+    
+    // Act
+    const result = await repository.findAll({ recipientName: 'John Doe' });
+    
+    // Assert
+    expect(result.length).toBe(2);
+    expect(result[0].recipientName).toBe('John Doe');
+  });
+});
+
+#### Presentation Layer Tests
+- Test controllers with mocked services/use cases
+- Verify API request/response handling
+- Test validation, error handling, and authorization
+- Example:
+```javascript
+describe('KudosCardController', () => {
+  const mockUseCase = mock(CreateKudosCardUseCase);
+  const controller = new KudosCardController(instance(mockUseCase));
+  
+  it('should return 201 when kudos card is created', async () => {
+    // Arrange
+    when(mockUseCase.execute(anything())).thenResolve(mockKudosCard);
+    const req = mockRequest({ body: validCreateKudosCardDTO });
+    const res = mockResponse();
+    
+    // Act
+    await controller.create(req, res);
+    
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ id: mockKudosCard.id })
+    );
+  });
+});
+
+### Integration Tests (src/tests/integration/)
+
+Integration tests verify that components work together correctly.
+
+#### Repository Integration Tests
+- Test repositories with a real test database
+- Verify database queries, transactions, and error handling
+- Example:
+```javascript
+describe('KudosCard Repository Integration', () => {
+  let testDb: TestDatabase;
+  
+  beforeAll(async () => {
+    testDb = await TestDatabase.create();
+    await testDb.migrate();
+  });
+  
+  it('should save and retrieve kudos cards with team and category data', async () => {
+    // Arrange
+    const repository = new PostgresKudosCardRepository(testDb.getConnection());
+    
+    // Act
+    await repository.create(newKudosCard);
+    const result = await repository.findById(newKudosCard.id);
+    
+    // Assert
+    expect(result).not.toBeNull();
+    expect(result?.teamId).toBe(newKudosCard.teamId);
+  });
+});
+
+#### API Integration Tests
+- Test complete API endpoints with a test database
+- Verify HTTP status codes, response bodies, and error responses
+- Example:
+```javascript
+describe('KudosCard API', () => {
+  let app: Express;
+  let testDb: TestDatabase;
+  
+  beforeAll(async () => {
+    testDb = await TestDatabase.create();
+    await testDb.migrate();
+    app = await createTestApp(testDb.getConnection());
+  });
+  
+  it('should create a new kudos card', async () => {
+    // Act
+    const response = await request(app)
+      .post('/api/kudos-cards')
+      .set('Authorization', `Bearer ${testToken}`)
+      .send(validCreateKudosCardDTO);
+    
+    // Assert
+    expect(response.status).toBe(201);
+    expect(response.body.recipientName).toBe(validCreateKudosCardDTO.recipientName);
+  });
+});
+
+### E2E Tests (src/tests/e2e/)
+
+End-to-end tests verify complete user flows and system behavior.
+
+- Test complete user journeys
+- Verify system behavior from end-user perspective
+- Example:
+```javascript
+describe('Kudos Card E2E', () => {
+  it('should allow tech lead to create and view kudos cards', async () => {
+    // Login as tech lead
+    await page.goto('/login');
+    await page.fill('input[name="email"]', 'lead@example.com');
+    await page.fill('input[name="password"]', 'password');
+    await page.click('button[type="submit"]');
+    
+    // Create kudos card
+    await page.goto('/kudos/new');
+    await page.fill('input[name="recipientName"]', 'John Doe');
+    await page.selectOption('select[name="teamId"]', '1');
+    await page.selectOption('select[name="categoryId"]', '2');
+    await page.fill('textarea[name="message"]', 'Great work on the project!');
+    await page.click('button[type="submit"]');
+    
+    // Verify kudos card appears on wall
+    await page.goto('/kudos');
+    expect(await page.textContent('.kudos-card')).toContain('John Doe');
+  });
+});
+```
+
+## Test Configuration
+
+### Database Setup
+
+For integration and E2E tests, use a separate test database:
+
+```typescript
+// src/tests/utils/test-database.ts
+export class TestDatabase {
+  static async create(): Promise<TestDatabase> {
+    // Create isolated test database
+    const connection = await createConnection({
+      // Test database config
+    });
+    return new TestDatabase(connection);
+  }
+  
+  async migrate(): Promise<void> {
+    // Run migrations on test database
+  }
+  
+  async seed(data: any): Promise<void> {
+    // Seed test data
+  }
+  
+  async cleanup(): Promise<void> {
+    // Clean test database after tests
+  }
+}
+```
+
+### Mock Data
+
+Create realistic test fixtures for all entities:
+
+```typescript
+// src/tests/fixtures/kudos-card.fixtures.ts
+export const mockKudosCards = [
+  {
+    id: '123e4567-e89b-12d3-a456-426614174000',
+    recipientName: 'John Doe',
+    teamId: 1,
+    categoryId: 2,
+    message: 'Great teamwork on the project!',
+    createdBy: '123e4567-e89b-12d3-a456-426614174001',
+    createdAt: new Date('2023-01-01'),
+    updatedAt: new Date('2023-01-01')
+  },
+  // More fixtures...
+];
+```
+
+## Best Practices
+
+1. **Test Isolation**: Each test should be independent and not affect other tests
+2. **Fast Execution**: Unit tests should be fast, integration tests moderately fast
+3. **Readable Tests**: Use descriptive test names and the AAA (Arrange-Act-Assert) pattern
+4. **Test Coverage**: Aim for high coverage of domain and application layers
+5. **CI Integration**: Run all tests in CI pipeline before merge
+6. **Mocking Strategy**: Mock external dependencies, not internal implementation
+7. **Test Data Management**: Use fixtures and factories for test data
+
+## Folder Structure
+
+```
+src/
+└── tests/
+    ├── unit/
+    │   ├── domain/
+    │   ├── application/
+    │   ├── infrastructure/
+    │   └── presentation/
+    ├── integration/
+    │   ├── repositories/
+    │   └── api/
+    ├── e2e/
+    │   └── flows/
+    ├── fixtures/
+    └── utils/
+```

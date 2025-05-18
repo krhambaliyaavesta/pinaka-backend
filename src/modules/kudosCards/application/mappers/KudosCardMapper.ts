@@ -29,9 +29,9 @@ export class KudosCardMapper {
   ): KudosCardDTO {
     // Convert entity to plain object to avoid 'props' property in response
     const cardData = kudosCard.toObject();
-    
+
     return {
-      id: cardData.id,
+      id: cardData.id.toString(),
       recipientName: cardData.recipientName,
       teamId: cardData.teamId,
       teamName: teamName,
@@ -48,22 +48,25 @@ export class KudosCardMapper {
   }
 
   /**
-   * Converts a CreateKudosCardDTO to KudosCard entity properties
-   * @param createKudosCardDTO The DTO containing kudos card creation data
-   * @param createdBy The ID of the user creating the kudos card
-   * @returns KudosCard properties ready for entity creation
+   * Converts a CreateKudosCardDTO to KudosCardProps for entity creation
+   * @param createKudosCardDTO The CreateKudosCardDTO to convert
+   * @param userId The ID of the user creating the kudos card
+   * @returns KudosCardProps for entity creation
    */
-  public static toDomain(
-    createKudosCardDTO: CreateKudosCardDTO,
-    createdBy: string
-  ): KudosCardProps {
+  public static toEntity(
+    createKudosCardDTO: Omit<CreateKudosCardDTO, "id">,
+    userId: string
+  ): Omit<KudosCardProps, "id"> {
     return {
-      id: createKudosCardDTO.id,
       recipientName: createKudosCardDTO.recipientName,
       teamId: createKudosCardDTO.teamId,
       categoryId: createKudosCardDTO.categoryId,
       message: createKudosCardDTO.message,
-      createdBy: createdBy,
+      createdBy: userId,
+      sentBy: (createKudosCardDTO as any).sentBy || userId, // Optional sentBy for creating on behalf of others
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
     };
   }
 

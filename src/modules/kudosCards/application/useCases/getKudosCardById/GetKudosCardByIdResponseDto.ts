@@ -2,7 +2,7 @@
  * DTO for kudos card details response
  */
 export interface GetKudosCardByIdResponseDto {
-  id: number;
+  id: string;
   recipientName: string;
   teamId: number;
   teamName: string;

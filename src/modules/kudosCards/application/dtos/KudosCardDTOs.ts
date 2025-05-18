@@ -2,7 +2,7 @@
  * DTO for retrieving kudos card information (enriched with related data)
  */
 export interface KudosCardDTO {
-  id: number;
+  id: string;
   recipientName: string;
   teamId: number;
   teamName: string;
@@ -21,7 +21,7 @@ export interface KudosCardDTO {
  * DTO for creating a new kudos card
  */
 export interface CreateKudosCardDTO {
-  id: number;
+  id: string;
   recipientName: string;
   teamId: number;
   categoryId: number;

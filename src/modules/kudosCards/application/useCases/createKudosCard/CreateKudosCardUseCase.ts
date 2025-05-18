@@ -77,7 +77,7 @@ export class CreateKudosCardUseCase {
 
       // Convert DTO to domain entity props
       const kudosCardProps = {
-        id: 0, // Temporary ID that will be replaced by the database
+        id: "0", // Temporary ID that will be replaced by the database
         recipientName: requestDto.recipientName,
         teamId: requestDto.teamId,
         categoryId: requestDto.categoryId,

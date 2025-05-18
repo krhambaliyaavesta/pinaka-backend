@@ -1,5 +1,5 @@
 export interface UpdateKudosCardResponseDto {
-  id: number;
+  id: string;
   recipientName: string;
   teamId: number;
   teamName: string;
